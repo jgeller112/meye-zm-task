@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>MEYE Z/M Task</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="https://unpkg.com/jspsych@7.3.1/css/jspsych.css" />
+
+  <script src="https://unpkg.com/jspsych@7.3.1"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+
+  <!-- MEYE -->
+  <script src="vendor/plugin-meye-config.min.js"></script>
+  <script src="vendor/extension-meye.min.js"></script>
+
+  <style>
+    .word { font-size: 64px; text-align: center; margin-top: 20vh; }
+  </style>
+</head>
+
+<body>
+<script>
+/* ---------- helpers to show data ---------- */
+function showData() {
+  const data = jsPsych.data.get().values();
+  document.body.innerHTML =
+    "<pre style='white-space:pre-wrap'>" +
+    JSON.stringify(data, null, 2) +
+    "</pre>";
+}
+
+/* ---------- init jsPsych ---------- */
+const jsPsych = initJsPsych({
+  extensions: [{ type: jsPsychExtensionMeye }],
+  on_finish: showData
+});
+
+jsPsych.data.addProperties({
+  participant: jsPsych.data.getURLVariable("ID") ?? null,
+  screenW: window.screen.availWidth,
+  screenH: window.screen.availHeight
+});
+
+/* ---------- stimuli ---------- */
+const words = [
+  { word: "APPLE", correct: "z" },
+  { word: "RIVER", correct: "m" },
+  { word: "HOUSE", correct: "z" },
+  { word: "MUSIC", correct: "m" },
+  { word: "GREEN", correct: "z" }
+];
+
+/* ---------- timeline ---------- */
+const timeline = [];
+
+// MEYE calibration
+timeline.push({ type: jsPsychMeyeConfig });
+
+// Instructions
+timeline.push({
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `
+    <p>You will see words.</p>
+    <p>Press <b>Z</b> or <b>M</b>.</p>
+    <p>Press space to start.</p>
+  `,
+  choices: [" "]
+});
+
+// Trials
+words.forEach((t, i) => {
+  timeline.push({
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<div class="word">${t.word}</div>`,
+    choices: ["z", "m"],
+    extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+    data: {
+      task: "zm",
+      word: t.word,
+      correct_key: t.correct,
+      trial_number: i + 1
+    },
+    on_finish: d => d.correct = d.response === t.correct
+  });
+});
+
+jsPsych.run(timeline);
+</script>
+</body>
+</html>
