@@ -2,19 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+
+  <!-- GitHub Pages project site base (https://USERNAME.github.io/meye-zm-task/) -->
   <base href="/meye-zm-task/">
+
   <title>MEYE Z/M Task</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <!-- jsPsych core + CSS -->
   <link rel="stylesheet" href="https://unpkg.com/jspsych@7.3.1/css/jspsych.css" />
-
   <script src="https://unpkg.com/jspsych@7.3.1"></script>
+
+  <!-- jsPsych plugins -->
   <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
 
+  <!-- DataPipe (pin if you can) -->
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script>
 
-
-  <!-- MEYE -->
+  <!-- MEYE (local vendor files in your repo) -->
   <script src="vendor/plugin-meye-config.min.js"></script>
   <script src="vendor/extension-meye.min.js"></script>
 
@@ -25,23 +31,18 @@
 
 <body>
 <script>
-/* ---------- helpers to show data ---------- */
-function showData() {
-  const data = jsPsych.data.get().values();
-  document.body.innerHTML =
-    "<pre style='white-space:pre-wrap'>" +
-    JSON.stringify(data, null, 2) +
-    "</pre>";
-}
-
 /* ---------- init jsPsych ---------- */
 const jsPsych = initJsPsych({
-  extensions: [{ type: jsPsychExtensionMeye }],
-  on_finish: showData
+  extensions: [{ type: jsPsychExtensionMeye }]
 });
+
+/* ---------- IDs / metadata ---------- */
+const subject_id = jsPsych.randomization.randomID(10);
+const filename = `${subject_id}.csv`;
 
 jsPsych.data.addProperties({
   participant: jsPsych.data.getURLVariable("ID") ?? null,
+  subject_id: subject_id,
   screenW: window.screen.availWidth,
   screenH: window.screen.availHeight
 });
@@ -56,24 +57,25 @@ const consent = {
       and you may stop at any time without penalty.
     </p>
     <p>
-      This study involves viewing words on the screen and responding with keypresses. Your eyes will be monitored but no images will be stored. 
+      This study involves viewing words on the screen and responding with keypresses.
+      Your eyes will be monitored but no images will be stored.
       No personally identifying information will be collected.
     </p>
     <p>
       By pressing <b>Agree</b>, you confirm that you are at least 18 years old and consent
       to participate.
     </p>
-    <p><b>Press Agree  or Do not agree.</b></p>
+    <p><b>Press Agree or Do not agree.</b></p>
   `,
   choices: ["Agree", "Do not agree"],
   on_finish: d => {
-    d.consent = (d.response === "Agree");
-    if (d.response === "Do not agree") {
+    // html-button-response returns the button index: 0, 1, ...
+    d.consent = (d.response === 0);
+    if (d.response === 1) {
       jsPsych.endExperiment("You chose not to participate.");
     }
   }
 };
-
 
 /* ---------- stimuli ---------- */
 const words = [
@@ -84,16 +86,25 @@ const words = [
   { word: "GREEN", correct: "z" }
 ];
 
+/* ---------- DataPipe save ---------- */
+const save_data = {
+  type: jsPsychPipe,
+  action: "save",
+  experiment_id: "AA0OXBjnorxa",
+  filename: filename,
+  data_string: () => jsPsych.data.get().csv()
+};
+
 /* ---------- timeline ---------- */
 const timeline = [];
 
-/* Consent first */
+// Consent first
 timeline.push(consent);
 
-/* MEYE calibration (unchanged) */
+// MEYE calibration/config
 timeline.push({ type: jsPsychMeyeConfig });
 
-/* Instructions */
+// Instructions
 timeline.push({
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `
@@ -104,21 +115,38 @@ timeline.push({
   choices: [" "]
 });
 
-/* Trials */
+// Trials
 words.forEach((t, i) => {
   timeline.push({
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<div class="word">${t.word}</div>`,
     choices: ["z", "m"],
+
+    // You already set MEYE as a global extension in initJsPsych.
+    // Keeping this here is OK if you want per-trial params:
     extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+
     data: {
       task: "zm",
       word: t.word,
       correct_key: t.correct,
       trial_number: i + 1
     },
-    on_finish: d => d.correct = d.response === t.correct
+    on_finish: d => {
+      d.correct = (d.response === t.correct);
+    }
   });
+});
+
+// Save at end
+timeline.push(save_data);
+
+// Optional: simple end screen
+timeline.push({
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `<p>Thank you! You may now close this window.</p>`,
+  choices: "NO_KEYS",
+  trial_duration: 1500
 });
 
 jsPsych.run(timeline);
