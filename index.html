@@ -10,7 +10,6 @@
 
   <script src="https://unpkg.com/jspsych@7.3.1"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-virtual-chinrest@2.0.3"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
 
 
@@ -75,21 +74,6 @@ const consent = {
   }
 };
 
-var chinrest = {
-  type: jsPsychVirtualChinrest,
-  blindspot_reps: 1,
-  resize_units: "deg",
-  pixels_per_unit: 50
-};
-
-var resized_stimulus = {
-  type: jsPsychHtmlButtonResponse,
-  stimulus: `
-    <p>If the measurements were done correctly, the square below should take up about 10 degrees of visual angle.</p>
-    <div style="background-color: black; width: 500px; height: 500px; margin: 20px auto;"></div>
-  `,
-  choices: ['Continue']
-}; 
 
 /* ---------- stimuli ---------- */
 const words = [
@@ -105,8 +89,6 @@ const timeline = [];
 
 /* Consent first */
 timeline.push(consent);
-
-timeline.push(chinrest, resized_stimulus);
 
 /* MEYE calibration (unchanged) */
 timeline.push({ type: jsPsychMeyeConfig });
