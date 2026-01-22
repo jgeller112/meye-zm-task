@@ -28,12 +28,12 @@
 
 <body>
 <script>
-/* ---------- bind MEYE extension safely ---------- */
+/* ---------- MEYE extension handle (prevents undefined on_start) ---------- */
 const MeyeExt = window.jsPsychExtensionMeye;
 if (!MeyeExt) {
   throw new Error(
     "MEYE extension not found (window.jsPsychExtensionMeye is undefined). " +
-    "Check that ./vendor/extension-meye.min.js loads (no 404) and defines jsPsychExtensionMeye."
+    "Check that ./vendor/extension-meye.min.js loads (no 404)."
   );
 }
 
@@ -72,9 +72,7 @@ const consent = {
     <p><b>Press Agree or Do not agree.</b></p>
   `,
   choices: ["Agree", "Do not agree"],
-  on_finish: d => {
-    d.consent = (d.response === 0); // 0 = Agree
-  }
+  on_finish: d => { d.consent = (d.response === 0); }
 };
 
 const no_consent_end = {
@@ -84,7 +82,7 @@ const no_consent_end = {
   trial_duration: 2000
 };
 
-/* ---------- Welcome + demographics (only if consented) ---------- */
+/* ---------- Welcome + demographics ---------- */
 const welcome = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: 'Welcome to the Pupil experiment.<br><br>Press SPACE to start.',
@@ -99,38 +97,30 @@ const age_trial = {
     required: true,
     placeholder: "e.g. 26"
   }],
-  on_finish: data => {
-    jsPsych.data.addProperties({ age: data.response.age });
-  }
+  on_finish: data => jsPsych.data.addProperties({ age: data.response.age })
 };
 
 const gender_trial = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: "What is your gender?<br><br>Press F for female, M for male, N for nonbinary, or X for prefer not to say",
   choices: ['f', 'm', 'n', 'x'],
-  on_finish: data => {
-    jsPsych.data.addProperties({ gender: data.response }); // 'f','m','n','x'
-  }
+  on_finish: data => jsPsych.data.addProperties({ gender: data.response })
 };
 
 const fluent_trial = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: "Are you fluent in English?<br><br>Press <strong>Y</strong> for Yes or <strong>N</strong> for No.",
   choices: ['y', 'n'],
-  data: { task: "english_fluent_q" },
-  on_finish: data => {
-    jsPsych.data.addProperties({ english_fluent: data.response }); // 'y' or 'n'
-  }
+  data: { q: "english_fluent" },
+  on_finish: data => jsPsych.data.addProperties({ english_fluent: data.response })
 };
 
 const native_trial = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: "Is English your native language?<br><br>Press <strong>Y</strong> for Yes or <strong>N</strong> for No.",
   choices: ['y', 'n'],
-  data: { task: "english_native_q" },
-  on_finish: data => {
-    jsPsych.data.addProperties({ english_native: data.response }); // 'y' or 'n'
-  }
+  data: { q: "english_native" },
+  on_finish: data => jsPsych.data.addProperties({ english_native: data.response })
 };
 
 const non_native_followup = {
@@ -143,9 +133,7 @@ const non_native_followup = {
         required: true,
         placeholder: "e.g. Arabic"
       }],
-      on_finish: data => {
-        jsPsych.data.addProperties({ native_language: data.response.native_language });
-      }
+      on_finish: data => jsPsych.data.addProperties({ native_language: data.response.native_language })
     },
     {
       type: jsPsychSurveyText,
@@ -155,15 +143,12 @@ const non_native_followup = {
         required: true,
         placeholder: "e.g. 5"
       }],
-      on_finish: data => {
-        jsPsych.data.addProperties({ english_start_age: data.response.english_start_age });
-      }
+      on_finish: data => jsPsych.data.addProperties({ english_start_age: data.response.english_start_age })
     }
   ],
   conditional_function: () => {
-    // Look up the most recent answer to the native-language question
-    const lastNativeQ = jsPsych.data.get().filter({ task: "english_native_q" }).last(1).values()[0];
-    return lastNativeQ && lastNativeQ.response === 'n';
+    const lastNative = jsPsych.data.get().filter({ q: "english_native" }).last(1).values()[0];
+    return lastNative && lastNative.response === 'n';
   }
 };
 
@@ -175,17 +160,7 @@ const other_langs = {
     required: false,
     placeholder: "e.g. French, Armenian"
   }],
-  on_finish: data => {
-    jsPsych.data.addProperties({ other_languages: data.response.other_languages });
-  }
-};
-
-const demographics_block = {
-  timeline: [welcome, age_trial, gender_trial, fluent_trial, native_trial, non_native_followup, other_langs],
-  conditional_function: () => {
-    const consent_row = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
-    return consent_row && consent_row.consent === true;
-  }
+  on_finish: data => jsPsych.data.addProperties({ other_languages: data.response.other_languages })
 };
 
 /* ---------- task stimuli ---------- */
@@ -197,43 +172,36 @@ const words = [
   { word: "GREEN", correct: "z" }
 ];
 
-/* ---------- MEYE config + task (only if consented) ---------- */
-const meye_and_task_block = {
-  timeline: [
-    // Start MEYE here (after consent+demographics)
-    { type: jsPsychMeyeConfig, extensions: [{ type: MeyeExt }] },
-
-    // Instructions
-    {
-      type: jsPsychHtmlKeyboardResponse,
-      stimulus: `
-        <p>You will see words.</p>
-        <p>Press <b>Z</b> or <b>M</b>.</p>
-        <p>Press space to start.</p>
-      `,
-      choices: [" "]
-    },
-
-    // Trials
-    ...words.map((t, i) => ({
-      type: jsPsychHtmlKeyboardResponse,
-      stimulus: `<div class="word">${t.word}</div>`,
-      choices: ["z", "m"],
-      extensions: [{ type: MeyeExt, params: { detection_interval: 200 } }],
-      data: {
-        task: "zm",
-        word: t.word,
-        correct_key: t.correct,
-        trial_number: i + 1
-      },
-      on_finish: d => { d.correct = (d.response === t.correct); }
-    }))
-  ],
-  conditional_function: () => {
-    const consent_row = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
-    return consent_row && consent_row.consent === true;
-  }
+/* ---------- separate calibration trial ---------- */
+const meye_calibration = {
+  type: jsPsychMeyeConfig,
+  extensions: [{ type: MeyeExt }]
 };
+
+/* ---------- task instructions + trials (separate from calibration) ---------- */
+const task_instructions = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `
+    <p>You will see words.</p>
+    <p>Press <b>Z</b> or <b>M</b>.</p>
+    <p>Press space to start.</p>
+  `,
+  choices: [" "]
+};
+
+const word_trials = words.map((t, i) => ({
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `<div class="word">${t.word}</div>`,
+  choices: ["z", "m"],
+  extensions: [{ type: MeyeExt, params: { detection_interval: 200 } }],
+  data: {
+    task: "zm",
+    word: t.word,
+    correct_key: t.correct,
+    trial_number: i + 1
+  },
+  on_finish: d => { d.correct = (d.response === t.correct); }
+}));
 
 /* ---------- DataPipe save ---------- */
 const save_data = {
@@ -242,14 +210,6 @@ const save_data = {
   experiment_id: "AA0OXBjnorxa",
   filename: filename,
   data_string: () => jsPsych.data.get().csv()
-};
-
-const save_block = {
-  timeline: [save_data],
-  conditional_function: () => {
-    const consent_row = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
-    return consent_row && consent_row.consent === true;
-  }
 };
 
 /* ---------- end screen ---------- */
@@ -262,22 +222,46 @@ const end_screen = {
 
 /* ---------- timeline ---------- */
 const timeline = [];
+
+/* Consent always first */
 timeline.push(consent);
 
-// If no consent, show end
+/* If no consent */
 timeline.push({
   timeline: [no_consent_end],
   conditional_function: () => {
-    const consent_row = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
-    return consent_row && consent_row.consent === false;
+    const c = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
+    return c && c.consent === false;
   }
 });
 
-// If consented, run demographics, MEYE+task, save, end
-timeline.push(demographics_block);
-timeline.push(meye_and_task_block);
-timeline.push(save_block);
-timeline.push(end_screen);
+/* Everything else only if consented */
+timeline.push({
+  timeline: [
+    welcome,
+    age_trial,
+    gender_trial,
+    fluent_trial,
+    native_trial,
+    non_native_followup,
+    other_langs,
+
+    // Calibration as its own thing
+    meye_calibration,
+
+    // Task separate from calibration
+    task_instructions,
+    ...word_trials,
+
+    // Save and end
+    save_data,
+    end_screen
+  ],
+  conditional_function: () => {
+    const c = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
+    return c && c.consent === true;
+  }
+});
 
 jsPsych.run(timeline);
 </script>
