@@ -15,7 +15,8 @@
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
 
   <!-- DataPipe -->
-  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script>
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
+
 
   <!-- MEYE (local vendor files in your repo) -->
   <script src="./vendor/plugin-meye-config.min.js"></script>
@@ -41,7 +42,8 @@ const jsPsych = initJsPsych({
 
 /* ---------- IDs / metadata ---------- */
 const subject_id = jsPsych.randomization.randomID(10);
-const filename = `${subject_id}.csv`;
+const filename = `${subject_id}-${Date.now()}.csv`;
+
 
 jsPsych.data.addProperties({
   participant: jsPsych.data.getURLVariable("ID") ?? null,
