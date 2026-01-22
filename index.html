@@ -4,38 +4,25 @@
   <meta charset="utf-8" />
   <base href="/meye-zm-task/">
   <title>MEYE Z/M Task</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- jsPsych core -->
   <link rel="stylesheet" href="https://unpkg.com/jspsych@7.3.1/css/jspsych.css" />
+
   <script src="https://unpkg.com/jspsych@7.3.1"></script>
-
-  <!-- jsPsych plugins -->
   <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-virtual-chinrest@1.1.2/dist/index.js"></script>
-
 
   <!-- MEYE -->
   <script src="vendor/plugin-meye-config.min.js"></script>
   <script src="vendor/extension-meye.min.js"></script>
 
   <style>
-    body {
-      background-color: #ffffff;
-    }
-    .word {
-      font-size: 64px;
-      text-align: center;
-      margin-top: 20vh;
-    }
+    .word { font-size: 64px; text-align: center; margin-top: 20vh; }
   </style>
 </head>
 
 <body>
 <script>
-
-/* ---------- helper: show data at end ---------- */
+/* ---------- helpers to show data ---------- */
 function showData() {
   const data = jsPsych.data.get().values();
   document.body.innerHTML =
@@ -50,63 +37,38 @@ const jsPsych = initJsPsych({
   on_finish: showData
 });
 
-/* ---------- global properties ---------- */
 jsPsych.data.addProperties({
   participant: jsPsych.data.getURLVariable("ID") ?? null,
   screenW: window.screen.availWidth,
   screenH: window.screen.availHeight
 });
 
-/* ---------- consent ---------- */
+/* ---------- consent (FIRST) ---------- */
 const consent = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `
     <h2>Consent to Participate</h2>
     <p>
-      You are invited to take part in a research study.
-      Participation is voluntary, and you may stop at any time.
+      You are invited to take part in a research study. Participation is voluntary,
+      and you may stop at any time without penalty.
     </p>
     <p>
-      The study involves viewing words on the screen and responding
-      with keypresses. No personally identifying information will be collected.
+      This study involves viewing words on the screen and responding with keypresses.
+      No personally identifying information will be collected.
     </p>
     <p>
-      By pressing <b>I</b>, you confirm that you are at least 18 years old
-      and consent to participate.
+      By pressing <b>I</b>, you confirm that you are at least 18 years old and consent
+      to participate.
     </p>
     <p><b>Press I to agree, or Q to quit.</b></p>
   `,
   choices: ["i", "q"],
   on_finish: d => {
+    d.consent = (d.response === "i");
     if (d.response === "q") {
       jsPsych.endExperiment("You chose not to participate.");
     }
   }
-};
-
-/* ---------- virtual chinrest ---------- */
-const chinrest = {
-  type: jsPsychVirtualChinrest,
-  blindspot_reps: 3,
-  resize_units: "cm",
-  item_path: "https://unpkg.com/@jspsych/plugin-virtual-chinrest/assets/",
-  data: { task: "virtual_chinrest" }
-};
-
-/* ---------- MEYE calibration ---------- */
-const meye_calibration = {
-  type: jsPsychMeyeConfig
-};
-
-/* ---------- instructions ---------- */
-const instructions = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: `
-    <p>You will see words presented one at a time.</p>
-    <p>Press <b>Z</b> for category A and <b>M</b> for category B.</p>
-    <p>Press the spacebar to begin.</p>
-  `,
-  choices: [" "]
 };
 
 /* ---------- stimuli ---------- */
@@ -118,37 +80,44 @@ const words = [
   { word: "GREEN", correct: "z" }
 ];
 
-/* ---------- trials ---------- */
-const trials = words.map((t, i) => ({
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: `<div class="word">${t.word}</div>`,
-  choices: ["z", "m"],
-  extensions: [{
-    type: jsPsychExtensionMeye,
-    params: { detection_interval: 200 }
-  }],
-  data: {
-    task: "zm",
-    word: t.word,
-    correct_key: t.correct,
-    trial_number: i + 1
-  },
-  on_finish: d => {
-    d.correct = d.response === t.correct;
-  }
-}));
-
 /* ---------- timeline ---------- */
 const timeline = [];
+
+/* Consent first */
 timeline.push(consent);
-timeline.push(chinrest);
-timeline.push(meye_calibration);
-timeline.push(instructions);
-timeline.push(...trials);
 
-/* ---------- run ---------- */
+/* MEYE calibration (unchanged) */
+timeline.push({ type: jsPsychMeyeConfig });
+
+/* Instructions */
+timeline.push({
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `
+    <p>You will see words.</p>
+    <p>Press <b>Z</b> or <b>M</b>.</p>
+    <p>Press space to start.</p>
+  `,
+  choices: [" "]
+});
+
+/* Trials */
+words.forEach((t, i) => {
+  timeline.push({
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<div class="word">${t.word}</div>`,
+    choices: ["z", "m"],
+    extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+    data: {
+      task: "zm",
+      word: t.word,
+      correct_key: t.correct,
+      trial_number: i + 1
+    },
+    on_finish: d => d.correct = d.response === t.correct
+  });
+});
+
 jsPsych.run(timeline);
-
 </script>
 </body>
 </html>
