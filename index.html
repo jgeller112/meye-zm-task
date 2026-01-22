@@ -3,9 +3,6 @@
 <head>
   <meta charset="utf-8" />
 
-  <!-- GitHub Pages project site base (https://USERNAME.github.io/meye-zm-task/) -->
-  <base href="/meye-zm-task/">
-
   <title>MEYE Z/M Task</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
@@ -17,12 +14,12 @@
   <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
 
-  <!-- DataPipe (pin if you can) -->
+  <!-- DataPipe -->
   <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script>
 
   <!-- MEYE (local vendor files in your repo) -->
-  <script src="vendor/plugin-meye-config.min.js"></script>
-  <script src="vendor/extension-meye.min.js"></script>
+  <script src="./vendor/plugin-meye-config.min.js"></script>
+  <script src="./vendor/extension-meye.min.js"></script>
 
   <style>
     .word { font-size: 64px; text-align: center; margin-top: 20vh; }
@@ -31,6 +28,12 @@
 
 <body>
 <script>
+/**
+ * IMPORTANT:
+ * On GitHub Pages project sites, DO NOT use <base href="..."> unless you *really* need it.
+ * It can break relative resource loading inside third-party scripts (like MEYE models).
+ */
+
 /* ---------- init jsPsych ---------- */
 const jsPsych = initJsPsych({
   extensions: [{ type: jsPsychExtensionMeye }]
@@ -44,7 +47,8 @@ jsPsych.data.addProperties({
   participant: jsPsych.data.getURLVariable("ID") ?? null,
   subject_id: subject_id,
   screenW: window.screen.availWidth,
-  screenH: window.screen.availHeight
+  screenH: window.screen.availHeight,
+  page_url: window.location.href
 });
 
 /* ---------- consent (FIRST) ---------- */
@@ -69,7 +73,6 @@ const consent = {
   `,
   choices: ["Agree", "Do not agree"],
   on_finish: d => {
-    // html-button-response returns the button index: 0, 1, ...
     d.consent = (d.response === 0);
     if (d.response === 1) {
       jsPsych.endExperiment("You chose not to participate.");
@@ -101,8 +104,23 @@ const timeline = [];
 // Consent first
 timeline.push(consent);
 
-// MEYE calibration/config
-timeline.push({ type: jsPsychMeyeConfig });
+/**
+ * MEYE calibration/config
+ *
+ * If your MEYE config plugin supports params for model paths, set them here.
+ * This avoids the plugin trying to resolve "../../plugin-meye-config/models/..."
+ *
+ * If it DOESN'T support these params, the next step is: put the models where the plugin expects them.
+ */
+timeline.push({
+  type: jsPsychMeyeConfig,
+
+  // Try these if supported by your MEYE config plugin (names vary by build):
+  // params: {
+  //   model_base_url: "./vendor/plugin-meye-config/models/",
+  //   model_json: "./vendor/plugin-meye-config/models/<MODEL_FOLDER>/model.json"
+  // }
+});
 
 // Instructions
 timeline.push({
@@ -122,8 +140,7 @@ words.forEach((t, i) => {
     stimulus: `<div class="word">${t.word}</div>`,
     choices: ["z", "m"],
 
-    // You already set MEYE as a global extension in initJsPsych.
-    // Keeping this here is OK if you want per-trial params:
+    // Global extension is already set, but per-trial params are fine:
     extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
 
     data: {
@@ -141,7 +158,7 @@ words.forEach((t, i) => {
 // Save at end
 timeline.push(save_data);
 
-// Optional: simple end screen
+// End screen
 timeline.push({
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `<p>Thank you! You may now close this window.</p>`,
