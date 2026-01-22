@@ -41,12 +41,11 @@ const jsPsych = initJsPsych({
 });
 
 /* ---------- IDs / metadata ---------- */
-const filename = `${subject_id}-${Date.now()}.csv`;
-
+const subject_id = jsPsych.randomization.randomID(10);
+const filename = `${subject_id}.csv`;
 
 jsPsych.data.addProperties({
   participant: jsPsych.data.getURLVariable("ID") ?? null,
-  subject_id: filename,
   screenW: window.screen.availWidth,
   screenH: window.screen.availHeight,
   page_url: window.location.href
