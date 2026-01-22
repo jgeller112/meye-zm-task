@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-
   <title>MEYE Z/M Task</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
@@ -13,10 +12,10 @@
   <!-- jsPsych plugins -->
   <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
 
-  <!-- DataPipe -->
+  <!-- DataPipe (pinned browser build) -->
   <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
-
 
   <!-- MEYE (local vendor files in your repo) -->
   <script src="./vendor/plugin-meye-config.min.js"></script>
@@ -29,15 +28,9 @@
 
 <body>
 <script>
-/**
- * IMPORTANT:
- * On GitHub Pages project sites, DO NOT use <base href="..."> unless you *really* need it.
- * It can break relative resource loading inside third-party scripts (like MEYE models).
- */
-
-/* ---------- init jsPsych ---------- */
+/* ---------- init jsPsych (NO global MEYE before consent) ---------- */
 const jsPsych = initJsPsych({
-  extensions: [{ type: jsPsychExtensionMeye }]
+  // IMPORTANT: do NOT set MEYE as a global extension here if you want consent first
 });
 
 /* ---------- IDs / metadata ---------- */
@@ -45,7 +38,7 @@ const subject_id = jsPsych.randomization.randomID(10);
 const filename = `${subject_id}.csv`;
 
 jsPsych.data.addProperties({
-  participant: jsPsych.data.getURLVariable("ID") ?? null,
+  participant: subject_id,
   screenW: window.screen.availWidth,
   screenH: window.screen.availHeight,
   page_url: window.location.href
@@ -73,14 +66,121 @@ const consent = {
   `,
   choices: ["Agree", "Do not agree"],
   on_finish: d => {
-    d.consent = (d.response === 0);
-    if (d.response === 1) {
-      jsPsych.endExperiment("You chose not to participate.");
-    }
+    d.consent = (d.response === 0); // 0 = Agree
   }
 };
 
-/* ---------- stimuli ---------- */
+const no_consent_end = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `<p>You chose not to participate. You may now close this window.</p>`,
+  choices: "NO_KEYS",
+  trial_duration: 2000
+};
+
+/* ---------- Welcome + demographics (only if consented) ---------- */
+const welcome = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: 'Welcome to the Pupil experiment.<br><br>Press SPACE to start.',
+  choices: [' ']
+};
+
+const age_trial = {
+  type: jsPsychSurveyText,
+  questions: [{
+    prompt: "What is your age?",
+    name: "age",
+    required: true,
+    placeholder: "e.g. 26"
+  }],
+  on_finish: data => {
+    jsPsych.data.addProperties({ age: data.response.age });
+  }
+};
+
+const gender_trial = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: "What is your gender?<br><br>Press F for female, M for male, N for nonbinary, or X for prefer not to say",
+  choices: ['f', 'm', 'n', 'x'],
+  on_finish: data => {
+    jsPsych.data.addProperties({ gender: data.response }); // 'f','m','n','x'
+  }
+};
+
+const fluent_trial = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: "Are you fluent in English?<br><br>Press <strong>Y</strong> for Yes or <strong>N</strong> for No.",
+  choices: ['y', 'n'],
+  on_finish: data => {
+    jsPsych.data.addProperties({ english_fluent: data.response }); // 'y' or 'n'
+  }
+};
+
+const native_trial = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: "Is English your native language?<br><br>Press <strong>Y</strong> for Yes or <strong>N</strong> for No.",
+  choices: ['y', 'n'],
+  on_finish: data => {
+    jsPsych.data.addProperties({ english_native: data.response }); // 'y' or 'n'
+  }
+};
+
+const non_native_followup = {
+  timeline: [
+    {
+      type: jsPsychSurveyText,
+      questions: [{
+        prompt: "What is your native language?",
+        name: "native_language",
+        required: true,
+        placeholder: "e.g. Arabic"
+      }],
+      on_finish: data => {
+        jsPsych.data.addProperties({ native_language: data.response.native_language });
+      }
+    },
+    {
+      type: jsPsychSurveyText,
+      questions: [{
+        prompt: "When did you start learning English?",
+        name: "english_start_age",
+        required: true,
+        placeholder: "e.g. 5"
+      }],
+      on_finish: data => {
+        jsPsych.data.addProperties({ english_start_age: data.response.english_start_age });
+      }
+    }
+  ],
+  conditional_function: () => {
+    // Use the property we stored, not "last(1)" (which can be the wrong trial)
+    const props = jsPsych.data.get().values()[0]; // any row will do for added properties
+    return props.english_native === 'n';
+  }
+};
+
+const other_langs = {
+  type: jsPsychSurveyText,
+  questions: [{
+    prompt: "Do you speak other languages? List them here:",
+    name: "other_languages",
+    required: false,
+    placeholder: "e.g. French, Armenian"
+  }],
+  on_finish: data => {
+    jsPsych.data.addProperties({ other_languages: data.response.other_languages });
+  }
+};
+
+const demographics_block = {
+  timeline: [welcome, age_trial, gender_trial, fluent_trial, native_trial, non_native_followup, other_langs],
+  conditional_function: () => {
+    // Only run demographics if consented
+    const consent_row = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
+    return consent_row && consent_row.consent === true;
+  }
+};
+
+/* ---------- task stimuli ---------- */
 const words = [
   { word: "APPLE", correct: "z" },
   { word: "RIVER", correct: "m" },
@@ -88,6 +188,44 @@ const words = [
   { word: "MUSIC", correct: "m" },
   { word: "GREEN", correct: "z" }
 ];
+
+/* ---------- MEYE config + task (only if consented) ---------- */
+const meye_and_task_block = {
+  timeline: [
+    // MEYE config: start MEYE here (after consent+demographics)
+    { type: jsPsychMeyeConfig, extensions: [{ type: jsPsychExtensionMeye }] },
+
+    // Instructions
+    {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <p>You will see words.</p>
+        <p>Press <b>Z</b> or <b>M</b>.</p>
+        <p>Press space to start.</p>
+      `,
+      choices: [" "]
+    },
+
+    // Trials
+    ...words.map((t, i) => ({
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `<div class="word">${t.word}</div>`,
+      choices: ["z", "m"],
+      extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+      data: {
+        task: "zm",
+        word: t.word,
+        correct_key: t.correct,
+        trial_number: i + 1
+      },
+      on_finish: d => { d.correct = (d.response === t.correct); }
+    }))
+  ],
+  conditional_function: () => {
+    const consent_row = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
+    return consent_row && consent_row.consent === true;
+  }
+};
 
 /* ---------- DataPipe save ---------- */
 const save_data = {
@@ -98,73 +236,40 @@ const save_data = {
   data_string: () => jsPsych.data.get().csv()
 };
 
-/* ---------- timeline ---------- */
-const timeline = [];
+const save_block = {
+  timeline: [save_data],
+  conditional_function: () => {
+    const consent_row = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
+    return consent_row && consent_row.consent === true;
+  }
+};
 
-// Consent first
-timeline.push(consent);
-
-/**
- * MEYE calibration/config
- *
- * If your MEYE config plugin supports params for model paths, set them here.
- * This avoids the plugin trying to resolve "../../plugin-meye-config/models/..."
- *
- * If it DOESN'T support these params, the next step is: put the models where the plugin expects them.
- */
-timeline.push({
-  type: jsPsychMeyeConfig,
-
-  // Try these if supported by your MEYE config plugin (names vary by build):
-  // params: {
-  //   model_base_url: "./vendor/plugin-meye-config/models/",
-  //   model_json: "./vendor/plugin-meye-config/models/<MODEL_FOLDER>/model.json"
-  // }
-});
-
-// Instructions
-timeline.push({
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: `
-    <p>You will see words.</p>
-    <p>Press <b>Z</b> or <b>M</b>.</p>
-    <p>Press space to start.</p>
-  `,
-  choices: [" "]
-});
-
-// Trials
-words.forEach((t, i) => {
-  timeline.push({
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<div class="word">${t.word}</div>`,
-    choices: ["z", "m"],
-
-    // Global extension is already set, but per-trial params are fine:
-    extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
-
-    data: {
-      task: "zm",
-      word: t.word,
-      correct_key: t.correct,
-      trial_number: i + 1
-    },
-    on_finish: d => {
-      d.correct = (d.response === t.correct);
-    }
-  });
-});
-
-// Save at end
-timeline.push(save_data);
-
-// End screen
-timeline.push({
+/* ---------- end screen ---------- */
+const end_screen = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `<p>Thank you! You may now close this window.</p>`,
   choices: "NO_KEYS",
   trial_duration: 1500
+};
+
+/* ---------- timeline ---------- */
+const timeline = [];
+timeline.push(consent);
+
+// If no consent, show end and stop
+timeline.push({
+  timeline: [no_consent_end],
+  conditional_function: () => {
+    const consent_row = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
+    return consent_row && consent_row.consent === false;
+  }
 });
+
+// If consented, run demographics, MEYE+task, save, end
+timeline.push(demographics_block);
+timeline.push(meye_and_task_block);
+timeline.push(save_block);
+timeline.push(end_screen);
 
 jsPsych.run(timeline);
 </script>
