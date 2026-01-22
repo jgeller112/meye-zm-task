@@ -73,6 +73,22 @@ const consent = {
   }
 };
 
+var chinrest = {
+  type: jsPsychVirtualChinrest,
+  blindspot_reps: 3,
+  resize_units: "deg",
+  pixels_per_unit: 50
+};
+
+var resized_stimulus = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `
+    <p>If the measurements were done correctly, the square below should take up about 10 degrees of visual angle.</p>
+    <div style="background-color: black; width: 500px; height: 500px; margin: 20px auto;"></div>
+  `,
+  choices: ['Continue']
+}; 
+
 /* ---------- stimuli ---------- */
 const words = [
   { word: "APPLE", correct: "z" },
@@ -87,6 +103,8 @@ const timeline = [];
 
 /* Consent first */
 timeline.push(consent);
+
+timeline.push(chinrest);
 
 /* MEYE calibration (unchanged) */
 timeline.push({ type: jsPsychMeyeConfig });
