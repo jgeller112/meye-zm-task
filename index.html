@@ -5,19 +5,15 @@
   <title>MEYE Z/M Task</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- jsPsych core + CSS -->
   <link rel="stylesheet" href="https://unpkg.com/jspsych@7.3.1/css/jspsych.css" />
   <script src="https://unpkg.com/jspsych@7.3.1"></script>
 
-  <!-- jsPsych plugins -->
   <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
   <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
 
-  <!-- DataPipe (pinned browser build) -->
   <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
 
-  <!-- MEYE (local vendor files in your repo) -->
   <script src="./vendor/plugin-meye-config.min.js"></script>
   <script src="./vendor/extension-meye.min.js"></script>
 
@@ -28,17 +24,10 @@
 
 <body>
 <script>
-/* ---------- MEYE extension handle (prevents undefined on_start) ---------- */
-const MeyeExt = window.jsPsychExtensionMeye;
-if (!MeyeExt) {
-  throw new Error(
-    "MEYE extension not found (window.jsPsychExtensionMeye is undefined). " +
-    "Check that ./vendor/extension-meye.min.js loads (no 404)."
-  );
-}
-
-/* ---------- init jsPsych (NO global MEYE before consent) ---------- */
-const jsPsych = initJsPsych({});
+/* ---------- init jsPsych (MEYE global, as in your working version) ---------- */
+const jsPsych = initJsPsych({
+  extensions: [{ type: jsPsychExtensionMeye }]
+});
 
 /* ---------- IDs / metadata ---------- */
 const subject_id = jsPsych.randomization.randomID(10);
@@ -51,25 +40,14 @@ jsPsych.data.addProperties({
   page_url: window.location.href
 });
 
-/* ---------- consent (FIRST) ---------- */
+/* ---------- consent ---------- */
 const consent = {
   type: jsPsychHtmlButtonResponse,
   stimulus: `
     <h2>Consent to Participate</h2>
-    <p>
-      You are invited to take part in a research study. Participation is voluntary,
-      and you may stop at any time without penalty.
-    </p>
-    <p>
-      This study involves viewing words on the screen and responding with keypresses.
-      Your eyes will be monitored but no images will be stored.
-      No personally identifying information will be collected.
-    </p>
-    <p>
-      By pressing <b>Agree</b>, you confirm that you are at least 18 years old and consent
-      to participate.
-    </p>
-    <p><b>Press Agree or Do not agree.</b></p>
+    <p>You are invited to take part in a research study. Participation is voluntary.</p>
+    <p>Your eyes will be monitored but no images will be stored. No personally identifying information will be collected.</p>
+    <p>By pressing <b>Agree</b>, you confirm that you are at least 18 years old and consent to participate.</p>
   `,
   choices: ["Agree", "Do not agree"],
   on_finish: d => { d.consent = (d.response === 0); }
@@ -82,7 +60,7 @@ const no_consent_end = {
   trial_duration: 2000
 };
 
-/* ---------- Welcome + demographics ---------- */
+/* ---------- welcome + demographics ---------- */
 const welcome = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: 'Welcome to the Pupil experiment.<br><br>Press SPACE to start.',
@@ -91,12 +69,7 @@ const welcome = {
 
 const age_trial = {
   type: jsPsychSurveyText,
-  questions: [{
-    prompt: "What is your age?",
-    name: "age",
-    required: true,
-    placeholder: "e.g. 26"
-  }],
+  questions: [{ prompt: "What is your age?", name: "age", required: true, placeholder: "e.g. 26" }],
   on_finish: data => jsPsych.data.addProperties({ age: data.response.age })
 };
 
@@ -109,7 +82,7 @@ const gender_trial = {
 
 const fluent_trial = {
   type: jsPsychHtmlKeyboardResponse,
-  stimulus: "Are you fluent in English?<br><br>Press <strong>Y</strong> for Yes or <strong>N</strong> for No.",
+  stimulus: "Are you fluent in English?<br><br>Press Y for Yes or N for No.",
   choices: ['y', 'n'],
   data: { q: "english_fluent" },
   on_finish: data => jsPsych.data.addProperties({ english_fluent: data.response })
@@ -117,7 +90,7 @@ const fluent_trial = {
 
 const native_trial = {
   type: jsPsychHtmlKeyboardResponse,
-  stimulus: "Is English your native language?<br><br>Press <strong>Y</strong> for Yes or <strong>N</strong> for No.",
+  stimulus: "Is English your native language?<br><br>Press Y for Yes or N for No.",
   choices: ['y', 'n'],
   data: { q: "english_native" },
   on_finish: data => jsPsych.data.addProperties({ english_native: data.response })
@@ -127,22 +100,12 @@ const non_native_followup = {
   timeline: [
     {
       type: jsPsychSurveyText,
-      questions: [{
-        prompt: "What is your native language?",
-        name: "native_language",
-        required: true,
-        placeholder: "e.g. Arabic"
-      }],
+      questions: [{ prompt: "What is your native language?", name: "native_language", required: true, placeholder: "e.g. Arabic" }],
       on_finish: data => jsPsych.data.addProperties({ native_language: data.response.native_language })
     },
     {
       type: jsPsychSurveyText,
-      questions: [{
-        prompt: "When did you start learning English?",
-        name: "english_start_age",
-        required: true,
-        placeholder: "e.g. 5"
-      }],
+      questions: [{ prompt: "When did you start learning English?", name: "english_start_age", required: true, placeholder: "e.g. 5" }],
       on_finish: data => jsPsych.data.addProperties({ english_start_age: data.response.english_start_age })
     }
   ],
@@ -154,16 +117,16 @@ const non_native_followup = {
 
 const other_langs = {
   type: jsPsychSurveyText,
-  questions: [{
-    prompt: "Do you speak other languages? List them here:",
-    name: "other_languages",
-    required: false,
-    placeholder: "e.g. French, Armenian"
-  }],
+  questions: [{ prompt: "Do you speak other languages? List them here:", name: "other_languages", required: false, placeholder: "e.g. French, Armenian" }],
   on_finish: data => jsPsych.data.addProperties({ other_languages: data.response.other_languages })
 };
 
-/* ---------- task stimuli ---------- */
+/* ---------- calibration (its own thing) ---------- */
+const meye_calibration = {
+  type: jsPsychMeyeConfig
+};
+
+/* ---------- task ---------- */
 const words = [
   { word: "APPLE", correct: "z" },
   { word: "RIVER", correct: "m" },
@@ -172,13 +135,6 @@ const words = [
   { word: "GREEN", correct: "z" }
 ];
 
-/* ---------- separate calibration trial ---------- */
-const meye_calibration = {
-  type: jsPsychMeyeConfig,
-  extensions: [{ type: MeyeExt }]
-};
-
-/* ---------- task instructions + trials (separate from calibration) ---------- */
 const task_instructions = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `
@@ -193,7 +149,9 @@ const word_trials = words.map((t, i) => ({
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `<div class="word">${t.word}</div>`,
   choices: ["z", "m"],
-  extensions: [{ type: MeyeExt, params: { detection_interval: 200 } }],
+  // If MEYE is global, you do NOT need per-trial extensions.
+  // If you really need detection_interval per trial, uncomment the next line:
+  // extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
   data: {
     task: "zm",
     word: t.word,
@@ -203,7 +161,7 @@ const word_trials = words.map((t, i) => ({
   on_finish: d => { d.correct = (d.response === t.correct); }
 }));
 
-/* ---------- DataPipe save ---------- */
+/* ---------- save ---------- */
 const save_data = {
   type: jsPsychPipe,
   action: "save",
@@ -212,7 +170,6 @@ const save_data = {
   data_string: () => jsPsych.data.get().csv()
 };
 
-/* ---------- end screen ---------- */
 const end_screen = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `<p>Thank you! You may now close this window.</p>`,
@@ -222,11 +179,8 @@ const end_screen = {
 
 /* ---------- timeline ---------- */
 const timeline = [];
-
-/* Consent always first */
 timeline.push(consent);
 
-/* If no consent */
 timeline.push({
   timeline: [no_consent_end],
   conditional_function: () => {
@@ -235,7 +189,6 @@ timeline.push({
   }
 });
 
-/* Everything else only if consented */
 timeline.push({
   timeline: [
     welcome,
@@ -245,15 +198,9 @@ timeline.push({
     native_trial,
     non_native_followup,
     other_langs,
-
-    // Calibration as its own thing
     meye_calibration,
-
-    // Task separate from calibration
     task_instructions,
     ...word_trials,
-
-    // Save and end
     save_data,
     end_screen
   ],
