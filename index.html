@@ -28,10 +28,17 @@
 
 <body>
 <script>
+/* ---------- bind MEYE extension safely ---------- */
+const MeyeExt = window.jsPsychExtensionMeye;
+if (!MeyeExt) {
+  throw new Error(
+    "MEYE extension not found (window.jsPsychExtensionMeye is undefined). " +
+    "Check that ./vendor/extension-meye.min.js loads (no 404) and defines jsPsychExtensionMeye."
+  );
+}
+
 /* ---------- init jsPsych (NO global MEYE before consent) ---------- */
-const jsPsych = initJsPsych({
-  // IMPORTANT: do NOT set MEYE as a global extension here if you want consent first
-});
+const jsPsych = initJsPsych({});
 
 /* ---------- IDs / metadata ---------- */
 const subject_id = jsPsych.randomization.randomID(10);
@@ -110,6 +117,7 @@ const fluent_trial = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: "Are you fluent in English?<br><br>Press <strong>Y</strong> for Yes or <strong>N</strong> for No.",
   choices: ['y', 'n'],
+  data: { task: "english_fluent_q" },
   on_finish: data => {
     jsPsych.data.addProperties({ english_fluent: data.response }); // 'y' or 'n'
   }
@@ -119,6 +127,7 @@ const native_trial = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: "Is English your native language?<br><br>Press <strong>Y</strong> for Yes or <strong>N</strong> for No.",
   choices: ['y', 'n'],
+  data: { task: "english_native_q" },
   on_finish: data => {
     jsPsych.data.addProperties({ english_native: data.response }); // 'y' or 'n'
   }
@@ -152,9 +161,9 @@ const non_native_followup = {
     }
   ],
   conditional_function: () => {
-    // Use the property we stored, not "last(1)" (which can be the wrong trial)
-    const props = jsPsych.data.get().values()[0]; // any row will do for added properties
-    return props.english_native === 'n';
+    // Look up the most recent answer to the native-language question
+    const lastNativeQ = jsPsych.data.get().filter({ task: "english_native_q" }).last(1).values()[0];
+    return lastNativeQ && lastNativeQ.response === 'n';
   }
 };
 
@@ -174,7 +183,6 @@ const other_langs = {
 const demographics_block = {
   timeline: [welcome, age_trial, gender_trial, fluent_trial, native_trial, non_native_followup, other_langs],
   conditional_function: () => {
-    // Only run demographics if consented
     const consent_row = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
     return consent_row && consent_row.consent === true;
   }
@@ -192,8 +200,8 @@ const words = [
 /* ---------- MEYE config + task (only if consented) ---------- */
 const meye_and_task_block = {
   timeline: [
-    // MEYE config: start MEYE here (after consent+demographics)
-    { type: jsPsychMeyeConfig, extensions: [{ type: jsPsychExtensionMeye }] },
+    // Start MEYE here (after consent+demographics)
+    { type: jsPsychMeyeConfig, extensions: [{ type: MeyeExt }] },
 
     // Instructions
     {
@@ -211,7 +219,7 @@ const meye_and_task_block = {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: `<div class="word">${t.word}</div>`,
       choices: ["z", "m"],
-      extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+      extensions: [{ type: MeyeExt, params: { detection_interval: 200 } }],
       data: {
         task: "zm",
         word: t.word,
@@ -256,7 +264,7 @@ const end_screen = {
 const timeline = [];
 timeline.push(consent);
 
-// If no consent, show end and stop
+// If no consent, show end
 timeline.push({
   timeline: [no_consent_end],
   conditional_function: () => {
