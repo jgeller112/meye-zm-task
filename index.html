@@ -49,7 +49,7 @@ jsPsych.data.addProperties({
 
 /* ---------- consent (FIRST) ---------- */
 const consent = {
-  type: jsPsychHtmlKeyboardResponse,
+  type: jsPsychHtmlButtonResponse,
   stimulus: `
     <h2>Consent to Participate</h2>
     <p>
@@ -61,7 +61,7 @@ const consent = {
       No personally identifying information will be collected.
     </p>
     <p>
-      By pressing <b>I</b>, you confirm that you are at least 18 years old and consent
+      By pressing <b>Agree</b>, you confirm that you are at least 18 years old and consent
       to participate.
     </p>
     <p><b>Press Agree  or Do not agree.</b></p>
