@@ -28,25 +28,34 @@
   <script src="./vendor/plugin-meye-config.min.js"></script>
   <script src="./vendor/extension-meye.min.js"></script>
 
-  <style>
-    .word {
-      font-size: 64px;
-      text-align: center;
-      margin-top: 20vh;
-      font-family: "Courier New", Courier, monospace;
-    }
+<style>
+  /* Global background + text color */
+  body {
+    background-color: #555;   /* dark grey */
+    color: #000;              /* black text */
+  }
 
-    .consent-box{
-      max-width: 900px;
-      margin: 0 auto;
-      text-align: left;
-      border: 1px solid #ccc;
-      padding: 16px;
-      height: 60vh;
-      overflow-y: auto;
-      background: white;
-    }
-  </style>
+  /* Make sure jsPsych content inherits it */
+  #jspsych-content {
+    background-color: transparent;
+    color: #000;
+  }
+
+  /* Word + fixation (Courier New) */
+  .word {
+    font-size: 64px;
+    text-align: center;
+    margin-top: 20vh;
+    font-family: "Courier New", Courier, monospace;
+    color: #000;
+  }
+
+  /* Keep consent readable */
+  .consent-box {
+    background: #666;         /* slightly lighter grey */
+    color: #000;
+  }
+</style>
 </head>
 
 <body>
@@ -237,22 +246,42 @@ async function loadTrialsCSV(url) {
     const rows = await loadTrialsCSV("./trials.csv");
     const trials = jsPsych.randomization.shuffle(rows);
 
-    const word_trials = trials.map((t, i) => ({
-      type: jsPsychHtmlKeyboardResponse,
-      stimulus: `<div class="word">${t.Target}</div>`,
-      choices: ["z", "m"],
-      data: {
-        task: "zm",
-        freq: t.freq,
-        Target: t.Target,
-        lex: t.lex,
-        correct_key: String(t.corrAns).toLowerCase(),
-        trial_number: i + 1
-      },
-      on_finish: d => {
-        d.correct = (String(d.response).toLowerCase() === String(d.correct_key).toLowerCase());
-      }
-    }));
+    const word_trials = trials.flatMap((t, i) => ([
+  // fixation (500 ms)
+  {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<div class="word">+</div>`,
+    choices: "NO_KEYS",
+    trial_duration: 500,
+
+    // optional: keep MEYE running during fixation too
+    extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+
+    data: { task: "fixation", trial_number: i + 1 }
+  },
+
+  // word trial
+  {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<div class="word">${t.Target}</div>`,
+    choices: ["z", "m"],
+
+    extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+
+    data: {
+      task: "zm",
+      freq: t.freq,
+      Target: t.Target,
+      lex: t.lex,
+      stim_path: t.stim_path,
+      correct_key: String(t.corrAns).toLowerCase(),
+      trial_number: i + 1
+    },
+    on_finish: d => {
+      d.correct = (String(d.response).toLowerCase() === String(d.correct_key).toLowerCase());
+    }
+  }
+]));
 
     const task_instructions = {
       type: jsPsychHtmlKeyboardResponse,
