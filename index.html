@@ -28,17 +28,9 @@
   <script src="./vendor/extension-meye.min.js"></script>
 
   <style>
-    /* Middle grey background + black text */
-    body {
-      background-color: #808080;
-      color: #000;
-    }
-    #jspsych-content {
-      background-color: transparent;
-      color: #000;
-    }
+    body { background-color: #808080; color: #000; }
+    #jspsych-content { background-color: transparent; color: #000; }
 
-    /* Word + fixation */
     .word {
       font-size: 64px;
       text-align: center;
@@ -47,17 +39,14 @@
       color: #000;
     }
 
-    /* Consent: white, scrollable */
     .consent-box{
       background: #ffffff;
       color: #000000;
-
       max-width: 900px;
       margin: 0 auto;
       text-align: left;
       border: 1px solid #ccc;
       padding: 16px;
-
       height: 60vh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
@@ -83,7 +72,7 @@ jsPsych.data.addProperties({
   page_url: window.location.href
 });
 
-/* ---------- consent (scroll-to-bottom enable, but allow if no scroll needed) ---------- */
+/* ---------- consent (unchanged) ---------- */
 const consent = {
   type: jsPsychHtmlButtonResponse,
   stimulus: `
@@ -92,7 +81,6 @@ const consent = {
       <h2>Informed Consent to be in Study: Understanding Webcam Eye-tracking</h2>
       <p><strong>Researcher:</strong> Jason Geller, Ph.D.<br>
       <strong>Type of consent:</strong> Behavioral Consent Form</p>
-
       <h3>Introduction</h3>
       <p>
         You are being invited to take part in a research study that uses webcam-based eye-tracking 
@@ -102,7 +90,6 @@ const consent = {
         movements using a webcam, we aim to gain insights into how visual attention supports 
         language comprehension and information processing.
       </p>
-
       <h3>Who can participate?</h3>
       <p>
         You were selected to be in the study because you expressed interest in participating in 
@@ -115,7 +102,6 @@ const consent = {
         <li>Be able to see visual images on a computer screen</li>
         <li>Be able to hear auditory information</li>
       </ul>
-
       <h3>What will happen?</h3>
       <p>
         If you agree to take part in this research, you will be asked to complete a series of tasks 
@@ -125,18 +111,15 @@ const consent = {
         on screen, or looking at an item on screen. You will also be asked to fill out a questionnaire 
         regarding your speech, language, and hearing experience and demographic information.
       </p>
-
       <h3>What is the time commitment?</h3>
       <p>
         The study is estimated to take 30 minutes to complete. The entire study will be conducted in one session.
       </p>
-
       <h3>How will we compensate you for being part of the study?</h3>
       <p>
         If you signed up through the psychological sciences participant pool (SONA), you will receive 
         1 experimental credits upon completion.
       </p>
-
       <h3>What are the risks and benefits?</h3>
       <p>
         There may be no direct benefits to you, but you may feel gratified in knowing that you helped 
@@ -151,7 +134,6 @@ const consent = {
         not affect your current or future relations with the University, and there is no penalty or loss of 
         benefits. You are free to quit at any time, for whatever reason.
       </p>
-
       <h3>What will happen with your data?</h3>
       <p>
         All identifying data will be kept confidential. The research team will not be able to ascertain or 
@@ -178,7 +160,6 @@ const consent = {
         information that could indicate your identity unless you give your permission, or unless the researchers 
         become legally required to do so.
       </p>
-
       <h3>Who can you contact if you have more questions?</h3>
       <ul>
         <li>If you have any questions or want more information concerning this research you may contact 
@@ -187,7 +168,6 @@ const consent = {
           Director, Office for Research Protections, Boston College at (617) 552-4778, or 
           <a href="mailto:irb@bc.edu">irb@bc.edu</a>.</li>
       </ul>
-
       <h3>Statement of Consent</h3>
       <p>By clicking “I Agree”:</p>
       <ul>
@@ -197,7 +177,6 @@ const consent = {
         <li>I know that I am free to withdraw at any time.</li>
       </ul>
     </div>
-
     <p style="max-width:900px;margin:12px auto 0;text-align:left;">
       Please scroll to the bottom of the consent form to enable “I Agree”.
     </p>
@@ -209,19 +188,13 @@ const consent = {
 
     const update = () => {
       const needsScroll = box.scrollHeight > box.clientHeight + 2;
-
-      if (!needsScroll) {
-        btnAgree.disabled = false;
-        return;
-      }
-
+      if (!needsScroll) { btnAgree.disabled = false; return; }
       const atBottom = (box.scrollTop + box.clientHeight) >= (box.scrollHeight - 5);
       btnAgree.disabled = !atBottom;
     };
 
     btnAgree.disabled = true;
     setTimeout(update, 50);
-
     box.addEventListener("scroll", update);
     window.addEventListener("resize", update);
   },
@@ -235,65 +208,27 @@ const no_consent_end = {
   trial_duration: 2000
 };
 
-/* ---------- welcome ---------- */
 const welcome = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: 'Welcome to the Pupil experiment.<br><br>Press SPACE to start.',
   choices: [' ']
 };
 
-/* ---------- calibration ---------- */
-const meye_calibration = {
-  type: jsPsychMeyeConfig
-};
+const meye_calibration = { type: jsPsychMeyeConfig };
 
-/* ---------- helper: load CSV trials ---------- */
 async function loadTrialsCSV(url) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
   const text = await res.text();
-
   const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
   if (parsed.errors?.length) console.warn("CSV parse warnings:", parsed.errors);
-
   return parsed.data;
 }
 
-/* ---------- build + run timeline AFTER loading trials ---------- */
 (async () => {
   try {
     const rows = await loadTrialsCSV("./trials.csv");
     const trials = jsPsych.randomization.shuffle(rows);
-
-    // 500ms fixation + word on each trial
-    const word_trials = trials.flatMap((t, i) => ([
-      {
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: `<div class="word">+</div>`,
-        choices: "NO_KEYS",
-        trial_duration: 500,
-        extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
-        data: { task: "fixation", trial_number: i + 1 }
-      },
-      {
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: `<div class="word">${t.Target}</div>`,
-        choices: ["z", "m"],
-        extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
-        data: {
-          task: "zm",
-          freq: t.freq,
-          Target: t.Target,
-          lex: t.lex,
-          stim_path: t.stim_path,
-          correct_key: String(t.corrAns).toLowerCase(),
-          trial_number: i + 1
-        },
-        on_finish: d => {
-          d.correct = (String(d.response).toLowerCase() === String(d.correct_key).toLowerCase());
-        }
-      }
-    ]));
 
     const task_instructions = {
       type: jsPsychHtmlKeyboardResponse,
@@ -305,7 +240,48 @@ async function loadTrialsCSV(url) {
       choices: [" "]
     };
 
-    /* ---------- ONE-PAGE end questionnaire ---------- */
+    /* ---------- ONE TRIAL PER ITEM: fixation -> target -> response ---------- */
+    const word_trials = trials.map((t, i) => ({
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `<div class="word" id="stim">+</div>`,
+      choices: ["z", "m"],
+      response_ends_trial: true,
+
+      // MEYE is global; only include this if you need to override params per trial:
+      // extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+
+      data: {
+        task: "zm",
+        trial_number: i + 1,
+        freq: t.freq,
+        Target: t.Target,
+        lex: t.lex,
+        stim_path: t.stim_path,
+        correct_key: String(t.corrAns).toLowerCase(),
+
+        // markers only (no timing): you asked for this
+        markers: ["fixation_onset"]
+      },
+
+      on_load: () => {
+        // after 500 ms, swap + to target and append marker
+        setTimeout(() => {
+          const el = document.getElementById("stim");
+          if (el) el.innerHTML = t.Target;
+
+          const last = jsPsych.data.get().last(1).values()[0];
+          const updated = (last.markers || []).concat(["target_onset"]);
+          jsPsych.data.addDataToLastTrial({ markers: updated });
+
+        }, 500);
+      },
+
+      on_finish: d => {
+        d.correct = (String(d.response).toLowerCase() === String(d.correct_key).toLowerCase());
+      }
+    }));
+
+    /* ---------- end questionnaire (unchanged) ---------- */
     const end_questions = {
       type: jsPsychSurvey,
       survey_json: {
@@ -347,7 +323,6 @@ async function loadTrialsCSV(url) {
       }
     };
 
-    /* ---------- save ---------- */
     const save_data = {
       type: jsPsychPipe,
       action: "save",
@@ -363,7 +338,6 @@ async function loadTrialsCSV(url) {
       trial_duration: 1500
     };
 
-    /* ---------- timeline ---------- */
     const timeline = [];
     timeline.push(consent);
 
