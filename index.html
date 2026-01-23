@@ -29,16 +29,9 @@
 
   <style>
     /* Middle grey background + black text */
-    body {
-      background-color: #808080;
-      color: #000;
-    }
-    #jspsych-content {
-      background-color: transparent;
-      color: #000;
-    }
+    body { background-color: #808080; color: #000; }
+    #jspsych-content { background-color: transparent; color: #000; }
 
-    /* Word + fixation */
     .word {
       font-size: 64px;
       text-align: center;
@@ -47,17 +40,14 @@
       color: #000;
     }
 
-    /* Consent: white, scrollable */
     .consent-box{
       background: #ffffff;
       color: #000000;
-
       max-width: 900px;
       margin: 0 auto;
       text-align: left;
       border: 1px solid #ccc;
       padding: 16px;
-
       height: 60vh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
@@ -70,7 +60,7 @@
 /* ---------- init jsPsych ---------- */
 const jsPsych = initJsPsych({
   show_progress_bar: true,
-  auto_update_progress_bar: false,         // ✅ we will control it
+  auto_update_progress_bar: false,
   extensions: [{ type: jsPsychExtensionMeye }]
 });
 
@@ -237,9 +227,7 @@ const welcome = {
   choices: [' ']
 };
 
-const meye_calibration = {
-  type: jsPsychMeyeConfig
-};
+const meye_calibration = { type: jsPsychMeyeConfig };
 
 async function loadTrialsCSV(url) {
   const res = await fetch(url, { cache: "no-store" });
@@ -254,10 +242,10 @@ async function loadTrialsCSV(url) {
 /* ---------- build + run AFTER loading trials ---------- */
 (async () => {
   try {
-    const rows = await loadTrialsCSV("./trials.csv");
+    // ✅ GitHub Pages safer path:
+    const rows = await loadTrialsCSV("trials.csv");
     const trials = jsPsych.randomization.shuffle(rows);
 
-    // Build your fixation+word trials
     const word_trials = trials.flatMap((t, i) => ([
       {
         type: jsPsychHtmlKeyboardResponse,
@@ -355,12 +343,11 @@ async function loadTrialsCSV(url) {
     /* ---------- ✅ MANUAL PROGRESS BAR WIRING ---------- */
     let progressCount = 0;
 
-    // Count stages AFTER consent (consent itself is not counted here)
     const TOTAL_STEPS =
       1 + // welcome
       1 + // calibration
       1 + // instructions
-      word_trials.length + // fixation + word (both count)
+      word_trials.length +
       1 + // end_questions
       1;  // end_screen
 
@@ -370,17 +357,12 @@ async function loadTrialsCSV(url) {
       if (typeof extraOnFinish === "function") extraOnFinish(data);
     };
 
-    // start at 0
-    jsPsych.setProgressBar(0);
-
-    // Wrap on_finish for each stage we count
     welcome.on_finish = bumpProgress(welcome.on_finish);
     meye_calibration.on_finish = bumpProgress(meye_calibration.on_finish);
     task_instructions.on_finish = bumpProgress(task_instructions.on_finish);
     end_questions.on_finish = bumpProgress(end_questions.on_finish);
     end_screen.on_finish = bumpProgress(end_screen.on_finish);
 
-    // Add on_finish to every fixation+word trial
     word_trials.forEach(tr => {
       tr.on_finish = bumpProgress(tr.on_finish);
     });
@@ -414,6 +396,9 @@ async function loadTrialsCSV(url) {
     });
 
     jsPsych.run(timeline);
+
+    // ✅ IMPORTANT: progress bar exists only after run() starts
+    jsPsych.setProgressBar(0);
 
   } catch (err) {
     console.error(err);
