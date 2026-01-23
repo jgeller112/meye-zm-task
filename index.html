@@ -67,9 +67,10 @@
 
 <body>
 <script>
-
+/* ---------- init jsPsych ---------- */
 const jsPsych = initJsPsych({
   show_progress_bar: true,
+  auto_update_progress_bar: false,         // ✅ we will control it
   extensions: [{ type: jsPsychExtensionMeye }]
 });
 
@@ -84,7 +85,7 @@ jsPsych.data.addProperties({
   page_url: window.location.href
 });
 
-/* ---------- consent (scroll-to-bottom enable, but allow if no scroll needed) ---------- */
+/* ---------- consent ---------- */
 const consent = {
   type: jsPsychHtmlButtonResponse,
   stimulus: `
@@ -96,18 +97,18 @@ const consent = {
 
       <h3>Introduction</h3>
       <p>
-        You are being invited to take part in a research study that uses webcam-based eye-tracking 
-        to investigate how people process speech and language. The purpose of this study is to 
-        better understand how college-aged individuals perceive and interpret spoken language, 
-        and also gain insight into webcam eye-tracking more broadly. By tracking your eye 
-        movements using a webcam, we aim to gain insights into how visual attention supports 
+        You are being invited to take part in a research study that uses webcam-based eye-tracking
+        to investigate how people process speech and language. The purpose of this study is to
+        better understand how college-aged individuals perceive and interpret spoken language,
+        and also gain insight into webcam eye-tracking more broadly. By tracking your eye
+        movements using a webcam, we aim to gain insights into how visual attention supports
         language comprehension and information processing.
       </p>
 
       <h3>Who can participate?</h3>
       <p>
-        You were selected to be in the study because you expressed interest in participating in 
-        cognitive psychology and neuroscience research in our laboratory, and because you meet the 
+        You were selected to be in the study because you expressed interest in participating in
+        cognitive psychology and neuroscience research in our laboratory, and because you meet the
         criteria for participation. In order to participate, participants must:
       </p>
       <ul>
@@ -119,11 +120,11 @@ const consent = {
 
       <h3>What will happen?</h3>
       <p>
-        If you agree to take part in this research, you will be asked to complete a series of tasks 
-        involving speech sounds, words, or sentences while we track your eye movements on screen 
-        using the camera on the computer. The tasks may involve listening to speech and making 
-        decisions about what you hear by pressing a button, typing a response, clicking on buttons 
-        on screen, or looking at an item on screen. You will also be asked to fill out a questionnaire 
+        If you agree to take part in this research, you will be asked to complete a series of tasks
+        involving speech sounds, words, or sentences while we track your eye movements on screen
+        using the camera on the computer. The tasks may involve listening to speech and making
+        decisions about what you hear by pressing a button, typing a response, clicking on buttons
+        on screen, or looking at an item on screen. You will also be asked to fill out a questionnaire
         regarding your speech, language, and hearing experience and demographic information.
       </p>
 
@@ -134,58 +135,58 @@ const consent = {
 
       <h3>How will we compensate you for being part of the study?</h3>
       <p>
-        If you signed up through the psychological sciences participant pool (SONA), you will receive 
+        If you signed up through the psychological sciences participant pool (SONA), you will receive
         1 experimental credits upon completion.
       </p>
 
       <h3>What are the risks and benefits?</h3>
       <p>
-        There may be no direct benefits to you, but you may feel gratified in knowing that you helped 
-        further scientific research. We hope that your participation in the study will tell us more about 
+        There may be no direct benefits to you, but you may feel gratified in knowing that you helped
+        further scientific research. We hope that your participation in the study will tell us more about
         how listeners comprehend spoken language and how we can use webcams to study it.
       </p>
       <p>
-        The risks of participating in this study are minimal. A possible discomfort is that you may feel 
-        fatigued. If you become upset or frustrated by the experiment, we encourage you to take breaks, 
-        and you can withdraw from the study at any time. There may be other risks that are unknown at 
-        this time. Choosing to be in this study is voluntary. If you choose not to be in this study, it will 
-        not affect your current or future relations with the University, and there is no penalty or loss of 
+        The risks of participating in this study are minimal. A possible discomfort is that you may feel
+        fatigued. If you become upset or frustrated by the experiment, we encourage you to take breaks,
+        and you can withdraw from the study at any time. There may be other risks that are unknown at
+        this time. Choosing to be in this study is voluntary. If you choose not to be in this study, it will
+        not affect your current or future relations with the University, and there is no penalty or loss of
         benefits. You are free to quit at any time, for whatever reason.
       </p>
 
       <h3>What will happen with your data?</h3>
       <p>
-        All identifying data will be kept confidential. The research team will not be able to ascertain or 
-        have access to use and/or disclose subjects’ email addresses. The data will be stored on servers 
-        used to collect the data, including Gorilla (gorilla.sc) and/or Boston College web servers. They 
+        All identifying data will be kept confidential. The research team will not be able to ascertain or
+        have access to use and/or disclose subjects’ email addresses. The data will be stored on servers
+        used to collect the data, including Gorilla (gorilla.sc) and/or Boston College web servers. They
         will be analyzed on password-protected computers in our lab or on secure Boston College servers.
       </p>
       <p>
-        All data will include unique subject IDs generated by the recruitment site. Only individuals on an 
-        approved Research Personnel List will have access to this potentially identifying information. 
-        Subject IDs will be replaced with our own arbitrary numeric subject IDs before any data are shared 
-        with other researchers outside of our research team. This will further remove the shared data from 
-        the identifying information stored outside of our control on the recruitment site. No other identifying 
-        information will be requested as part of this study. 
+        All data will include unique subject IDs generated by the recruitment site. Only individuals on an
+        approved Research Personnel List will have access to this potentially identifying information.
+        Subject IDs will be replaced with our own arbitrary numeric subject IDs before any data are shared
+        with other researchers outside of our research team. This will further remove the shared data from
+        the identifying information stored outside of our control on the recruitment site. No other identifying
+        information will be requested as part of this study.
       </p>
       <p>
-        Data that have been stripped of any identifying information may be shared with other researchers, 
-        who may use these data in their own research. 
+        Data that have been stripped of any identifying information may be shared with other researchers,
+        who may use these data in their own research.
       </p>
       <p>
-        <strong>Note:</strong> The Institutional Review Board at Boston College and internal Boston College auditors may 
-        review the research records. State or federal laws or court orders may also require that information 
-        from research study records be released. Otherwise, the researchers will not release to others any 
-        information that could indicate your identity unless you give your permission, or unless the researchers 
+        <strong>Note:</strong> The Institutional Review Board at Boston College and internal Boston College auditors may
+        review the research records. State or federal laws or court orders may also require that information
+        from research study records be released. Otherwise, the researchers will not release to others any
+        information that could indicate your identity unless you give your permission, or unless the researchers
         become legally required to do so.
       </p>
 
       <h3>Who can you contact if you have more questions?</h3>
       <ul>
-        <li>If you have any questions or want more information concerning this research you may contact 
+        <li>If you have any questions or want more information concerning this research you may contact
           Dr. Jason Geller at <a href="mailto:gellerja@bc.edu">gellerja@bc.edu</a> or (515) 520-3464.</li>
-        <li>If you have any questions about your rights as a person in this research study, you may contact: 
-          Director, Office for Research Protections, Boston College at (617) 552-4778, or 
+        <li>If you have any questions about your rights as a person in this research study, you may contact:
+          Director, Office for Research Protections, Boston College at (617) 552-4778, or
           <a href="mailto:irb@bc.edu">irb@bc.edu</a>.</li>
       </ul>
 
@@ -210,19 +211,13 @@ const consent = {
 
     const update = () => {
       const needsScroll = box.scrollHeight > box.clientHeight + 2;
-
-      if (!needsScroll) {
-        btnAgree.disabled = false;
-        return;
-      }
-
+      if (!needsScroll) { btnAgree.disabled = false; return; }
       const atBottom = (box.scrollTop + box.clientHeight) >= (box.scrollHeight - 5);
       btnAgree.disabled = !atBottom;
     };
 
     btnAgree.disabled = true;
     setTimeout(update, 50);
-
     box.addEventListener("scroll", update);
     window.addEventListener("resize", update);
   },
@@ -236,19 +231,16 @@ const no_consent_end = {
   trial_duration: 2000
 };
 
-/* ---------- welcome ---------- */
 const welcome = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: 'Welcome to the Pupil experiment.<br><br>Press SPACE to start.',
   choices: [' ']
 };
 
-/* ---------- calibration ---------- */
 const meye_calibration = {
   type: jsPsychMeyeConfig
 };
 
-/* ---------- helper: load CSV trials ---------- */
 async function loadTrialsCSV(url) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
@@ -256,17 +248,16 @@ async function loadTrialsCSV(url) {
 
   const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
   if (parsed.errors?.length) console.warn("CSV parse warnings:", parsed.errors);
-
   return parsed.data;
 }
 
-/* ---------- build + run timeline AFTER loading trials ---------- */
+/* ---------- build + run AFTER loading trials ---------- */
 (async () => {
   try {
     const rows = await loadTrialsCSV("./trials.csv");
     const trials = jsPsych.randomization.shuffle(rows);
 
-    // 500ms fixation + word on each trial
+    // Build your fixation+word trials
     const word_trials = trials.flatMap((t, i) => ([
       {
         type: jsPsychHtmlKeyboardResponse,
@@ -306,7 +297,6 @@ async function loadTrialsCSV(url) {
       choices: [" "]
     };
 
-    /* ---------- ONE-PAGE end questionnaire ---------- */
     const end_questions = {
       type: jsPsychSurvey,
       survey_json: {
@@ -348,7 +338,6 @@ async function loadTrialsCSV(url) {
       }
     };
 
-    /* ---------- save ---------- */
     const save_data = {
       type: jsPsychPipe,
       action: "save",
@@ -364,7 +353,40 @@ async function loadTrialsCSV(url) {
       trial_duration: 1500
     };
 
-    /* ---------- timeline ---------- */
+    /* ---------- ✅ MANUAL PROGRESS BAR WIRING ---------- */
+    let progressCount = 0;
+
+    // Count stages AFTER consent (consent itself is not counted here)
+    const TOTAL_STEPS =
+      1 + // welcome
+      1 + // calibration
+      1 + // instructions
+      word_trials.length + // fixation + word (both count)
+      1 + // end_questions
+      1;  // end_screen
+
+    const bumpProgress = (extraOnFinish) => (data) => {
+      progressCount += 1;
+      jsPsych.setProgressBar(progressCount / TOTAL_STEPS);
+      if (typeof extraOnFinish === "function") extraOnFinish(data);
+    };
+
+    // start at 0
+    jsPsych.setProgressBar(0);
+
+    // Wrap on_finish for each stage we count
+    welcome.on_finish = bumpProgress(welcome.on_finish);
+    meye_calibration.on_finish = bumpProgress(meye_calibration.on_finish);
+    task_instructions.on_finish = bumpProgress(task_instructions.on_finish);
+    end_questions.on_finish = bumpProgress(end_questions.on_finish);
+    end_screen.on_finish = bumpProgress(end_screen.on_finish);
+
+    // Add on_finish to every fixation+word trial
+    word_trials.forEach(tr => {
+      tr.on_finish = bumpProgress(tr.on_finish);
+    });
+    /* ---------- ✅ END MANUAL PROGRESS ---------- */
+
     const timeline = [];
     timeline.push(consent);
 
