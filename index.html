@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>MEYE Z/M Task</title>
+  <title>Pupil LDT Task</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- jsPsych core + CSS -->
@@ -12,9 +12,8 @@
   <!-- jsPsych plugins -->
   <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
 
-  <!-- SurveyJS-based jsPsych Survey plugin (for ONE-PAGE questionnaire) -->
+  <!-- SurveyJS-based jsPsych Survey plugin (ONE-PAGE questionnaire) -->
   <script src="https://unpkg.com/@jspsych/plugin-survey@1.0.1"></script>
   <link rel="stylesheet" href="https://unpkg.com/@jspsych/plugin-survey@1.0.1/css/survey.css">
 
@@ -28,41 +27,43 @@
   <script src="./vendor/plugin-meye-config.min.js"></script>
   <script src="./vendor/extension-meye.min.js"></script>
 
-<style>
-  body {
-    background-color: #808080;
-    color: #000;
-  }
+  <style>
+    /* Middle grey background + black text */
+    body {
+      background-color: #808080;
+      color: #000;
+    }
+    #jspsych-content {
+      background-color: transparent;
+      color: #000;
+    }
 
-  #jspsych-content {
-    background-color: transparent;
-    color: #000;
-  }
+    /* Word + fixation */
+    .word {
+      font-size: 64px;
+      text-align: center;
+      margin-top: 20vh;
+      font-family: "Courier New", Courier, monospace;
+      color: #000;
+    }
 
-  .word {
-    font-size: 64px;
-    text-align: center;
-    margin-top: 20vh;
-    font-family: "Courier New", Courier, monospace;
-    color: #000;
-  }
+    /* Consent: white, scrollable */
+    .consent-box{
+      background: #ffffff;
+      color: #000000;
 
-  /* ✅ Consent explicitly white + SCROLLABLE */
-  .consent-box {
-    background: #ffffff;
-    color: #000000;
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: left;
+      border: 1px solid #ccc;
+      padding: 16px;
 
-    max-width: 900px;
-    margin: 0 auto;
-    text-align: left;
-    border: 1px solid #ccc;
-    padding: 16px;
-
-    height: 60vh;            /* key */
-    overflow-y: auto;        /* key */
-    -webkit-overflow-scrolling: touch;
-  }
-</style>
+      height: 60vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  </style>
+</head>
 
 <body>
 <script>
@@ -82,7 +83,7 @@ jsPsych.data.addProperties({
   page_url: window.location.href
 });
 
-/* ---------- consent (scroll-to-bottom enable) ---------- */
+/* ---------- consent (scroll-to-bottom enable, but allow if no scroll needed) ---------- */
 const consent = {
   type: jsPsychHtmlButtonResponse,
   stimulus: `
@@ -204,13 +205,25 @@ const consent = {
   choices: ["I Agree", "Do not agree"],
   on_load: () => {
     const btnAgree = document.querySelectorAll(".jspsych-btn")[0];
-    btnAgree.disabled = true;
-
     const box = document.getElementById("consent-box");
-    box.addEventListener("scroll", () => {
+
+    const update = () => {
+      const needsScroll = box.scrollHeight > box.clientHeight + 2;
+
+      if (!needsScroll) {
+        btnAgree.disabled = false;
+        return;
+      }
+
       const atBottom = (box.scrollTop + box.clientHeight) >= (box.scrollHeight - 5);
-      if (atBottom) btnAgree.disabled = false;
-    });
+      btnAgree.disabled = !atBottom;
+    };
+
+    btnAgree.disabled = true;
+    setTimeout(update, 50);
+
+    box.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
   },
   on_finish: d => { d.consent = (d.response === 0); }
 };
@@ -229,7 +242,7 @@ const welcome = {
   choices: [' ']
 };
 
-/* ---------- calibration (its own thing) ---------- */
+/* ---------- calibration ---------- */
 const meye_calibration = {
   type: jsPsychMeyeConfig
 };
@@ -252,42 +265,35 @@ async function loadTrialsCSV(url) {
     const rows = await loadTrialsCSV("./trials.csv");
     const trials = jsPsych.randomization.shuffle(rows);
 
+    // 500ms fixation + word on each trial
     const word_trials = trials.flatMap((t, i) => ([
-  // fixation (500 ms)
-  {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<div class="word">+</div>`,
-    choices: "NO_KEYS",
-    trial_duration: 500,
-
-    // optional: keep MEYE running during fixation too
-    extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
-
-    data: { task: "fixation", trial_number: i + 1 }
-  },
-
-  // word trial
-  {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<div class="word">${t.Target}</div>`,
-    choices: ["z", "m"],
-
-    extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
-
-    data: {
-      task: "zm",
-      freq: t.freq,
-      Target: t.Target,
-      lex: t.lex,
-      stim_path: t.stim_path,
-      correct_key: String(t.corrAns).toLowerCase(),
-      trial_number: i + 1
-    },
-    on_finish: d => {
-      d.correct = (String(d.response).toLowerCase() === String(d.correct_key).toLowerCase());
-    }
-  }
-]));
+      {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `<div class="word">+</div>`,
+        choices: "NO_KEYS",
+        trial_duration: 500,
+        extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+        data: { task: "fixation", trial_number: i + 1 }
+      },
+      {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `<div class="word">${t.Target}</div>`,
+        choices: ["z", "m"],
+        extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+        data: {
+          task: "zm",
+          freq: t.freq,
+          Target: t.Target,
+          lex: t.lex,
+          stim_path: t.stim_path,
+          correct_key: String(t.corrAns).toLowerCase(),
+          trial_number: i + 1
+        },
+        on_finish: d => {
+          d.correct = (String(d.response).toLowerCase() === String(d.correct_key).toLowerCase());
+        }
+      }
+    ]));
 
     const task_instructions = {
       type: jsPsychHtmlKeyboardResponse,
@@ -299,7 +305,7 @@ async function loadTrialsCSV(url) {
       choices: [" "]
     };
 
-    /* ---------- ONE-PAGE end questionnaire (SurveyJS via plugin-survey) ---------- */
+    /* ---------- ONE-PAGE end questionnaire ---------- */
     const end_questions = {
       type: jsPsychSurvey,
       survey_json: {
@@ -307,71 +313,21 @@ async function loadTrialsCSV(url) {
         completeText: "Continue",
         elements: [
           { type: "text", name: "age", title: "What is your age?", isRequired: true, inputType: "number" },
-
-          {
-            type: "radiogroup",
-            name: "gender",
-            title: "What is your gender?",
-            isRequired: true,
-            choices: ["Female", "Male", "Nonbinary", "Prefer not to say"]
-          },
-
-          {
-            type: "radiogroup",
-            name: "english_fluent",
-            title: "Are you fluent in English?",
-            isRequired: true,
-            choices: ["Yes", "No"]
-          },
-
-          {
-            type: "radiogroup",
-            name: "english_native",
-            title: "Is English your native language?",
-            isRequired: true,
-            choices: ["Yes", "No"]
-          },
-
-          {
-            type: "text",
-            name: "native_language",
-            title: "If English is not your native language, what is your native language?"
-          },
-
-          {
-            type: "text",
-            name: "english_start_age",
-            title: "When did you start learning English? (age)"
-          },
-
-          {
-            type: "text",
-            name: "other_languages",
-            title: "Do you speak other languages? List them here:"
-          },
-
-          {
-            type: "radiogroup",
-            name: "eye_color",
-            title: "What is your eye color?",
-            isRequired: true,
-            choices: ["Brown", "Blue", "Green", "Hazel", "Gray", "Other / Mixed", "Prefer not to say"]
-          },
-
-          {
-            type: "radiogroup",
-            name: "vision_correction",
-            title: "Do you normally wear glasses or contact lenses?",
-            isRequired: true,
-            choices: ["No", "Glasses", "Contact lenses", "Both"]
-          },
-
-          {
-            type: "comment",
-            name: "pupil_difficulty",
-            title: "Was anything difficult about the pupil or eye tracking during the experiment?",
-            placeholder: "e.g., lighting, glasses glare, head movement, webcam issues…"
-          }
+          { type: "radiogroup", name: "gender", title: "What is your gender?", isRequired: true,
+            choices: ["Female", "Male", "Nonbinary", "Prefer not to say"] },
+          { type: "radiogroup", name: "english_fluent", title: "Are you fluent in English?", isRequired: true,
+            choices: ["Yes", "No"] },
+          { type: "radiogroup", name: "english_native", title: "Is English your native language?", isRequired: true,
+            choices: ["Yes", "No"] },
+          { type: "text", name: "native_language", title: "If English is not your native language, what is your native language?" },
+          { type: "text", name: "english_start_age", title: "When did you start learning English? (age)" },
+          { type: "text", name: "other_languages", title: "Do you speak other languages? List them here:" },
+          { type: "radiogroup", name: "eye_color", title: "What is your eye color?", isRequired: true,
+            choices: ["Brown", "Blue", "Green", "Hazel", "Gray", "Other / Mixed", "Prefer not to say"] },
+          { type: "radiogroup", name: "vision_correction", title: "Do you normally wear glasses or contact lenses?",
+            isRequired: true, choices: ["No", "Glasses", "Contact lenses", "Both"] },
+          { type: "comment", name: "pupil_difficulty", title: "Was anything difficult about the pupil or eye tracking during the experiment?",
+            placeholder: "e.g., lighting, glasses glare, head movement, webcam issues…" }
         ]
       },
       on_finish: (data) => {
