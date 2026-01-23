@@ -12,13 +12,35 @@
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
   <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
 
+  <script src="https://unpkg.com/@jspsych/plugin-survey@1.0.1"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@jspsych/plugin-survey@1.0.1/css/survey.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
   <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.5.0/dist/index.browser.min.js"></script>
 
   <script src="./vendor/plugin-meye-config.min.js"></script>
   <script src="./vendor/extension-meye.min.js"></script>
 
   <style>
-    .word { font-size: 64px; text-align: center; margin-top: 20vh; }
+    .word {
+      font-size: 64px;
+      text-align: center;
+      margin-top: 20vh;
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    /* Added: consent scroll container */
+    .consent-box{
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: left;
+      border: 1px solid #ccc;
+      padding: 16px;
+      height: 60vh;
+      overflow-y: auto;
+      background: white;
+    }
   </style>
 </head>
 
@@ -40,16 +62,136 @@ jsPsych.data.addProperties({
   page_url: window.location.href
 });
 
-/* ---------- consent ---------- */
+/* ---------- consent (UPDATED + scroll-to-bottom enable) ---------- */
 const consent = {
   type: jsPsychHtmlButtonResponse,
   stimulus: `
-    <h2>Consent to Participate</h2>
-    <p>You are invited to take part in a research study. Participation is voluntary.</p>
-    <p>Your eyes will be monitored but no images will be stored. No personally identifying information will be collected.</p>
-    <p>By pressing <b>Agree</b>, you confirm that you are at least 18 years old and consent to participate.</p>
+    <div class="consent-box" id="consent-box">
+      <h1>Boston College Department of Psychology</h1>
+      <h2>Informed Consent to be in Study: Understanding Webcam Eye-tracking</h2>
+      <p><strong>Researcher:</strong> Jason Geller, Ph.D.<br>
+      <strong>Type of consent:</strong> Behavioral Consent Form</p>
+
+      <h3>Introduction</h3>
+      <p>
+        You are being invited to take part in a research study that uses webcam-based eye-tracking 
+        to investigate how people process speech and language. The purpose of this study is to 
+        better understand how college-aged individuals perceive and interpret spoken language, 
+        and also gain insight into webcam eye-tracking more broadly. By tracking your eye 
+        movements using a webcam, we aim to gain insights into how visual attention supports 
+        language comprehension and information processing.
+      </p>
+
+      <h3>Who can participate?</h3>
+      <p>
+        You were selected to be in the study because you expressed interest in participating in 
+        cognitive psychology and neuroscience research in our laboratory, and because you meet the 
+        criteria for participation. In order to participate, participants must:
+      </p>
+      <ul>
+        <li>Be 18–36 years old</li>
+        <li>Be fluent in English</li>
+        <li>Be able to see visual images on a computer screen</li>
+        <li>Be able to hear auditory information</li>
+      </ul>
+
+      <h3>What will happen?</h3>
+      <p>
+        If you agree to take part in this research, you will be asked to complete a series of tasks 
+        involving speech sounds, words, or sentences while we track your eye movements on screen 
+        using the camera on the computer. The tasks may involve listening to speech and making 
+        decisions about what you hear by pressing a button, typing a response, clicking on buttons 
+        on screen, or looking at an item on screen. You will also be asked to fill out a questionnaire 
+        regarding your speech, language, and hearing experience and demographic information.
+      </p>
+
+      <h3>What is the time commitment?</h3>
+      <p>
+        The study is estimated to take 30 minutes to complete. The entire study will be conducted in one session.
+      </p>
+
+      <h3>How will we compensate you for being part of the study?</h3>
+      <p>
+        If you signed up through the psychological sciences participant pool (SONA), you will receive 
+        1 experimental credits upon completion.
+      </p>
+
+      <h3>What are the risks and benefits?</h3>
+      <p>
+        There may be no direct benefits to you, but you may feel gratified in knowing that you helped 
+        further scientific research. We hope that your participation in the study will tell us more about 
+        how listeners comprehend spoken language and how we can use webcams to study it.
+      </p>
+      <p>
+        The risks of participating in this study are minimal. A possible discomfort is that you may feel 
+        fatigued. If you become upset or frustrated by the experiment, we encourage you to take breaks, 
+        and you can withdraw from the study at any time. There may be other risks that are unknown at 
+        this time. Choosing to be in this study is voluntary. If you choose not to be in this study, it will 
+        not affect your current or future relations with the University, and there is no penalty or loss of 
+        benefits. You are free to quit at any time, for whatever reason.
+      </p>
+
+      <h3>What will happen with your data?</h3>
+      <p>
+        All identifying data will be kept confidential. The research team will not be able to ascertain or 
+        have access to use and/or disclose subjects’ email addresses. The data will be stored on servers 
+        used to collect the data, including Gorilla (gorilla.sc) and/or Boston College web servers. They 
+        will be analyzed on password-protected computers in our lab or on secure Boston College servers.
+      </p>
+      <p>
+        All data will include unique subject IDs generated by the recruitment site. Only individuals on an 
+        approved Research Personnel List will have access to this potentially identifying information. 
+        Subject IDs will be replaced with our own arbitrary numeric subject IDs before any data are shared 
+        with other researchers outside of our research team. This will further remove the shared data from 
+        the identifying information stored outside of our control on the recruitment site. No other identifying 
+        information will be requested as part of this study. 
+      </p>
+      <p>
+        Data that have been stripped of any identifying information may be shared with other researchers, 
+        who may use these data in their own research. 
+      </p>
+      <p>
+        <strong>Note:</strong> The Institutional Review Board at Boston College and internal Boston College auditors may 
+        review the research records. State or federal laws or court orders may also require that information 
+        from research study records be released. Otherwise, the researchers will not release to others any 
+        information that could indicate your identity unless you give your permission, or unless the researchers 
+        become legally required to do so.
+      </p>
+
+      <h3>Who can you contact if you have more questions?</h3>
+      <ul>
+        <li>If you have any questions or want more information concerning this research you may contact 
+          Dr. Jason Geller at <a href="mailto:gellerja@bc.edu">gellerja@bc.edu</a> or (515) 520-3464.</li>
+        <li>If you have any questions about your rights as a person in this research study, you may contact: 
+          Director, Office for Research Protections, Boston College at (617) 552-4778, or 
+          <a href="mailto:irb@bc.edu">irb@bc.edu</a>.</li>
+      </ul>
+
+      <h3>Statement of Consent</h3>
+      <p>By clicking “I Agree”:</p>
+      <ul>
+        <li>I agree to take part in this research.</li>
+        <li>I verify that I am 18 or older.</li>
+        <li>I feel like I understand what I am agreeing to.</li>
+        <li>I know that I am free to withdraw at any time.</li>
+      </ul>
+    </div>
+
+    <p style="max-width:900px;margin:12px auto 0;text-align:left;">
+      Please scroll to the bottom of the consent form to enable “I Agree”.
+    </p>
   `,
-  choices: ["Agree", "Do not agree"],
+  choices: ["I Agree", "Do not agree"],
+  on_load: () => {
+    const btnAgree = document.querySelectorAll(".jspsych-btn")[0];
+    btnAgree.disabled = true;
+
+    const box = document.getElementById("consent-box");
+    box.addEventListener("scroll", () => {
+      const atBottom = (box.scrollTop + box.clientHeight) >= (box.scrollHeight - 5);
+      if (atBottom) btnAgree.disabled = false;
+    });
+  },
   on_finish: d => { d.consent = (d.response === 0); }
 };
 
@@ -126,91 +268,149 @@ const meye_calibration = {
   type: jsPsychMeyeConfig
 };
 
-/* ---------- task ---------- */
-const words = [
-  { word: "APPLE", correct: "z" },
-  { word: "RIVER", correct: "m" },
-  { word: "HOUSE", correct: "z" },
-  { word: "MUSIC", correct: "m" },
-  { word: "GREEN", correct: "z" }
-];
+/* ---------- helper: load CSV trials ---------- */
+async function loadTrialsCSV(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
+  const text = await res.text();
 
-const task_instructions = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: `
-    <p>You will see words.</p>
-    <p>Press <b>Z</b> or <b>M</b>.</p>
-    <p>Press space to start.</p>
-  `,
-  choices: [" "]
-};
+  const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+  if (parsed.errors?.length) console.warn("CSV parse warnings:", parsed.errors);
 
-const word_trials = words.map((t, i) => ({
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: `<div class="word">${t.word}</div>`,
-  choices: ["z", "m"],
-  // If MEYE is global, you do NOT need per-trial extensions.
-  // If you really need detection_interval per trial, uncomment the next line:
-  // extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
-  data: {
-    task: "zm",
-    word: t.word,
-    correct_key: t.correct,
-    trial_number: i + 1
-  },
-  on_finish: d => { d.correct = (d.response === t.correct); }
-}));
+  return parsed.data;
+}
 
-/* ---------- save ---------- */
-const save_data = {
-  type: jsPsychPipe,
-  action: "save",
-  experiment_id: "AA0OXBjnorxa",
-  filename: filename,
-  data_string: () => jsPsych.data.get().csv()
-};
+/* ---------- build + run timeline AFTER loading trials ---------- */
+(async () => {
+  try {
+    const rows = await loadTrialsCSV("./trials.csv");
+    const trials = jsPsych.randomization.shuffle(rows);
 
-const end_screen = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: `<p>Thank you! You may now close this window.</p>`,
-  choices: "NO_KEYS",
-  trial_duration: 1500
-};
+    const word_trials = trials.map((t, i) => ({
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `<div class="word">${t.Target}</div>`,
+      choices: ["z", "m"],
+      data: {
+        task: "zm",
+        freq: t.freq,
+        target: t.target,
+        Target: t.Target,
+        blur: t.blur,
+        study: t.study,
+        lex: t.lex,
+        stim_path: t.stim_path,
+        correct_key: String(t.corrAns).toLowerCase(),
+        trial_number: i + 1
+      },
+      on_finish: d => {
+        d.correct = (String(d.response).toLowerCase() === String(d.correct_key).toLowerCase());
+      }
+    }));
 
-/* ---------- timeline ---------- */
-const timeline = [];
-timeline.push(consent);
+    const task_instructions = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <p>You will see words.</p>
+        <p>Press <b>Z</b> or <b>M</b>.</p>
+        <p>Press space to start.</p>
+      `,
+      choices: [" "]
+    };
 
-timeline.push({
-  timeline: [no_consent_end],
-  conditional_function: () => {
-    const c = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
-    return c && c.consent === false;
+    const pupil_followup = {
+      type: jsPsychSurvey,
+      pages: [[
+        {
+          type: "multi-choice",
+          prompt: "What is your eye color?",
+          name: "eye_color",
+          options: ["Brown", "Blue", "Green", "Hazel", "Gray", "Other / Mixed", "Prefer not to say"],
+          required: true
+        },
+        {
+          type: "multi-choice",
+          prompt: "Do you normally wear glasses or contact lenses?",
+          name: "vision_correction",
+          options: ["No", "Glasses", "Contact lenses", "Both"],
+          required: true
+        },
+        {
+          type: "text",
+          prompt: "Was anything difficult about the pupil or eye tracking during the experiment?",
+          name: "pupil_difficulty",
+          placeholder: "e.g., lighting, glasses glare, head movement, webcam issues…",
+          rows: 4,
+          required: false
+        }
+      ]]
+    };
+
+    const save_data = {
+      type: jsPsychPipe,
+      action: "save",
+      experiment_id: "AA0OXBjnorxa",
+      filename: filename,
+      data_string: () => jsPsych.data.get().csv()
+    };
+
+    const end_screen = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `<p>Thank you! You may now close this window.</p>`,
+      choices: "NO_KEYS",
+      trial_duration: 1500
+    };
+
+    const timeline = [];
+    timeline.push(consent);
+
+    timeline.push({
+      timeline: [no_consent_end],
+      conditional_function: () => {
+        const c = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
+        return c && c.consent === false;
+      }
+    });
+
+    timeline.push({
+      timeline: [
+        welcome,
+        age_trial,
+        gender_trial,
+        fluent_trial,
+        native_trial,
+        non_native_followup,
+        other_langs,
+        meye_calibration,
+        task_instructions,
+        ...word_trials,
+        pupil_followup,
+        save_data,
+        end_screen
+      ],
+      conditional_function: () => {
+        const c = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
+        return c && c.consent === true;
+      }
+    });
+
+    jsPsych.run(timeline);
+
+  } catch (err) {
+    console.error(err);
+    document.body.innerHTML = `
+      <div style="max-width:900px;margin:40px auto;font-family:system-ui, sans-serif;">
+        <h2>Experiment failed to start</h2>
+        <p><b>Error:</b> ${String(err).replaceAll("<","&lt;").replaceAll(">","&gt;")}</p>
+        <p>Most common causes:</p>
+        <ul>
+          <li><code>trials.csv</code> is not in the same folder as <code>index.html</code></li>
+          <li>File name capitalization mismatch (GitHub is case-sensitive)</li>
+          <li>Opening the file as <code>file://</code> instead of via HTTPS/localhost</li>
+        </ul>
+      </div>
+    `;
   }
-});
-
-timeline.push({
-  timeline: [
-    welcome,
-    age_trial,
-    gender_trial,
-    fluent_trial,
-    native_trial,
-    non_native_followup,
-    other_langs,
-    meye_calibration,
-    task_instructions,
-    ...word_trials,
-    save_data,
-    end_screen
-  ],
-  conditional_function: () => {
-    const c = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
-    return c && c.consent === true;
-  }
-});
-
-jsPsych.run(timeline);
+})(); // ✅ IMPORTANT: close the async wrapper
 </script>
 </body>
 </html>
