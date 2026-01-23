@@ -29,9 +29,8 @@
   <script src="./vendor/extension-meye.min.js"></script>
 
 <style>
-  /* Global background + text color */
   body {
-    background-color: #808080;  /* middle grey */
+    background-color: #808080;
     color: #000;
   }
 
@@ -40,7 +39,6 @@
     color: #000;
   }
 
-  /* Word + fixation */
   .word {
     font-size: 64px;
     text-align: center;
@@ -49,10 +47,20 @@
     color: #000;
   }
 
-  /* ✅ Consent explicitly white */
+  /* ✅ Consent explicitly white + SCROLLABLE */
   .consent-box {
     background: #ffffff;
     color: #000000;
+
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: left;
+    border: 1px solid #ccc;
+    padding: 16px;
+
+    height: 60vh;            /* key */
+    overflow-y: auto;        /* key */
+    -webkit-overflow-scrolling: touch;
   }
 </style>
 
