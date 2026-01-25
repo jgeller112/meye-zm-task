@@ -39,14 +39,21 @@
       color: #000;
     }
 
-    /* Word + fixation */
-    .word {
-      font-size: 64px;
-      text-align: center;
-      margin-top: 20vh;
-      font-family: "Courier New", Courier, monospace;
-      color: #000;
-    }
+   .word{
+  font-size: 64px;
+  font-family: "Courier New", Courier, monospace;
+  color: #000;
+
+  /* perfect center */
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* optional: avoid any default spacing */
+  margin: 0;
+  text-align: center;
+}
 
     /* Consent: white, scrollable */
     .consent-box{
