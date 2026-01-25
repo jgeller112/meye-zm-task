@@ -408,6 +408,33 @@ const end_questions = {
   }
 };
 
+const debrief = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `
+    <div style="max-width:900px;margin:0 auto;text-align:left;background:#fff;border:1px solid #ccc;padding:16px;">
+      <h2>Debrief</h2>
+
+      <p>
+        Thank you for participating. In this study, we are interested in how <b>pupil size changes</b>
+        while people process language.
+      </p>
+
+      <p>
+        In general, <b>pupil size tends to increase when processing is more difficult</b>.
+        This effect has typically been studied in controlled laboratory settings.
+      </p>
+
+      <p>
+        Our goal is to test whether we can observe these same pupil-size increases
+        using <b>webcam-based measurement online</b>.
+      </p>
+
+      <p>Click <b>Continue</b> to finish and submit your data.</p>
+    </div>
+  `,
+  choices: ["Continue"]
+};
+
 /* =========================
    Save + end screen
 ========================= */
@@ -481,30 +508,30 @@ const end_screen = {
       }
     });
 
-    // If consent -> run the experiment
-    timeline.push({
-      timeline: [
-        welcome,
-        meye_calibration,
+   timeline.push({
+  timeline: [
+    welcome,
+    meye_calibration,
 
-        // Practice BEFORE fullscreen (less annoying for practice)
-        practice_instructions,
-        practice_block,
+    practice_instructions,
+    practice_block,
 
-        // Fullscreen BEFORE main task
-        fullscreen_on,
+    fullscreen_on,
 
-        task_instructions,
-        ...word_trials,
-        end_questions,
-        save_data,
-        end_screen
-      ],
-      conditional_function: () => {
-        const c = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
-        return c && c.consent === true;
-      }
-    });
+    task_instructions,
+    ...word_trials,
+
+    end_questions,
+    debrief,       
+
+    save_data,
+    end_screen
+  ],
+  conditional_function: () => {
+    const c = jsPsych.data.get().filter({ trial_type: "html-button-response" }).last(1).values()[0];
+    return c && c.consent === true;
+  }
+});
 
     jsPsych.run(timeline);
 
