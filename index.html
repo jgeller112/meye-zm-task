@@ -318,16 +318,17 @@ async function loadTrialsCSV(url) {
       },
       {
         type: jsPsychHtmlKeyboardResponse,
-        stimulus: `<div class="word">${t.Target}</div>`,
+        stimulus: `<div class="word">${t.target}</div>`,
         choices: ["z", "m"],
         extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
         data: {
           task: "zm",
-          freq: t.freq,
-          Target: t.Target,
+          freq: t.frequency,
+          pair_id: t.pair_id, 
+          item_type: t.item_type, 
+          target: t.target,
           lex: t.lex,
-          stim_path: t.stim_path,
-          correct_key: String(t.corrAns).toLowerCase(),
+          correct_key: String(t.correctAns).toLowerCase(),
           trial_number: i + 1
         },
         on_finish: d => {
