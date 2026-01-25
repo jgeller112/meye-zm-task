@@ -12,6 +12,7 @@
   <!-- jsPsych plugins -->
   <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.2.0"></script>
 
   <!-- SurveyJS-based jsPsych Survey plugin (ONE-PAGE questionnaire) -->
   <script src="https://unpkg.com/@jspsych/plugin-survey@1.0.1"></script>
@@ -247,6 +248,17 @@ const meye_calibration = {
   type: jsPsychMeyeConfig
 };
 
+/* ---------- fullscreen: AFTER calibration, BEFORE task ---------- */
+const fullscreen_on = {
+  type: jsPsychFullscreen,
+  fullscreen_mode: true,
+  message: `
+    <p><b>Next, the main task will begin.</b></p>
+    <p>We will now switch to full screen for best eye-tracking quality.</p>
+  `,
+  button_label: "Continue"
+};
+
 /* ---------- helper: load CSV trials ---------- */
 async function loadTrialsCSV(url) {
   const res = await fetch(url, { cache: "no-store" });
@@ -379,6 +391,7 @@ async function loadTrialsCSV(url) {
       timeline: [
         welcome,
         meye_calibration,
+        fullscreen_on,     // ✅ fullscreen AFTER calibration, BEFORE main task
         task_instructions,
         ...word_trials,
         end_questions,
