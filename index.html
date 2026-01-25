@@ -239,13 +239,39 @@ const no_consent_end = {
   trial_duration: 2000
 };
 
-/* ---------- welcome ---------- */
 const welcome = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: 'Welcome to the Pupil experiment.<br><br>Press SPACE to start.',
-  choices: [' ']
-};
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `
+    <p><b>Welcome!</b></p>
 
+    <p>
+      This study uses your webcam to track your pupils--the black dots in your eyes.
+      Your browser will ask for permission to access your webcam —
+      please click <b>Allow</b> when prompted.
+    </p>
+
+    <p>
+      For best results:
+      <ul style="text-align:left; max-width:600px; margin: 0 auto;">
+        <li>Sit about an arm’s length from your screen</li>
+        <li>Make sure your face is well lit (avoid strong backlighting)</li>
+        <li>Try to keep your head still during the task</li>
+      </ul>
+    </p>
+
+    <p>
+      The experiment will switch to full screen during the main task.
+      Please do not exit full screen once the task begins.
+    </p>
+
+    <p style="font-size:0.9em;">
+      Webcam video is processed in your browser and is not saved or recorded.
+    </p>
+
+    <p><b>Press SPACE to continue.</b></p>
+  `,
+  choices: ["Continue"]
+};
 /* ---------- calibration ---------- */
 const meye_calibration = {
   type: jsPsychMeyeConfig
