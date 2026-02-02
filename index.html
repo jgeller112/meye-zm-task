@@ -65,7 +65,9 @@
 /* =========================
    Init + metadata
 ========================= */
-const jsPsych = initJsPsych({});
+const jsPsych = initJsPsych({
+  extensions: [{ type: jsPsychExtensionMeye }]
+});
 
 const subject_id = jsPsych.randomization.randomID(10);
 const filename = `${subject_id}.csv`;
@@ -545,7 +547,7 @@ const end_screen = {
         // Chinrest metadata only (NO rescaling)
         virtual_chinrest,
 
-        // MEYE config after chinrest
+         // MEYE config after chinrest
         meye_calibration,
 
         practice_instructions,
