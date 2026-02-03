@@ -323,13 +323,30 @@ const meye_calibration = {
 const practice_instructions = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `
-    <p>You will now complete a few <b>practice trials</b>. On each trial you will see a letter string and it will be either a real word or not a real word  (nonword)</p>
+    <p><b>Practice Trials</b></p>
+
     <p>
-      Press <b>Z</b> for a <b>nonword</b><br>
-      Press <b>M</b> for a <b>real word</b>
+      On each trial, you will see a <b>letter string</b> in the center of the screen.
+      Some strings form <b>real English words</b>, and others are <b>nonwords</b>
+      (letter strings that are not real words).
     </p>
-    <p>You will receive feedback.</p>
-    <p>Press space to begin.</p>
+
+    <p>
+      Your task is to decide <b>as quickly and accurately as possible</b> whether
+      the letter string is a real word.
+    </p>
+
+    <p>
+      Press <b>M</b> if the string is a <b>real word</b><br>
+      Press <b>Z</b> if the string is a <b>nonword</b>
+    </p>
+
+    <p>
+      A fixation cross (<b>+</b>) will appear before each item.
+      During practice, you will receive feedback after each response.
+    </p>
+
+    <p><i>Press the space bar to begin the practice trials.</i></p>
   `,
   choices: [" "]
 };
@@ -343,49 +360,38 @@ const practice_trials = [
 
 const practice_block = {
   timeline: [
-    // 1) FIXATION (like your main task)
     {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: `<div class="word">+</div>`,
       choices: "NO_KEYS",
       trial_duration: 500,
       data: { task: "practice_fix" }
-      // If you want MEYE running during fixation in practice too, uncomment:
-      // extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
     },
 
-    // 2) WORD TRIAL (response)
     {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: () => `<div class="word">${jsPsych.timelineVariable("target")}</div>`,
       choices: ["z", "m"],
-      data: {
+
+      // ✅ IMPORTANT: data as a function so timelineVariable resolves per-trial
+      data: () => ({
         task: "practice",
         target: jsPsych.timelineVariable("target"),
         correct_key: jsPsych.timelineVariable("correctAns")
-      },
-      // If you want MEYE running during practice response too, uncomment:
-      // extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
-      on_finish: d => {
-        d.correct = (
-          String(d.response).toLowerCase() ===
-          String(d.correct_key).toLowerCase()
-        );
+      }),
+
+      on_finish: (d) => {
+        // ✅ safest key comparison (handles case, key aliases, etc.)
+        d.correct = jsPsych.pluginAPI.compareKeys(d.response, d.correct_key);
       }
     },
 
-    // 3) FEEDBACK BOX (green/red)
     {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: () => {
-        const prev = jsPsych.data.get()
-          .filter({ task: "practice" })
-          .last(1)
-          .values()[0];
-
+        const prev = jsPsych.data.get().filter({ task: "practice" }).last(1).values()[0];
         const cls = prev.correct ? "correct" : "incorrect";
         const txt = prev.correct ? "Correct" : "Incorrect";
-
         return `<div class="feedback-box ${cls}"><b>${txt}</b></div>`;
       },
       choices: "NO_KEYS",
