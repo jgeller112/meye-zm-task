@@ -83,8 +83,18 @@
 const jsPsych = initJsPsych({
   extensions: [{ type: jsPsychExtensionMeye }]
 });
-const subject_id = jsPsych.randomization.randomID(10);
+
+
+let sona_id = jsPsych.data.urlVariables()['sona_id']; 
+
+const subject_id = sona_id;
 const filename = `${subject_id}.csv`;
+
+const SONA_COMPLETION_URL =
+  "https://bc.sona-systems.com/webstudy_credit.aspx" +
+  "?experiment_id=1515" +
+  "&credit_token=18c21828ff9a41f18355bcbe0e28692d" +
+  "&survey_code=" + encodeURIComponent(sona_id || "");
 
 jsPsych.data.addProperties({
   participant: subject_id,
@@ -323,31 +333,34 @@ const meye_calibration = {
 const practice_instructions = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `
-    <p><b>Practice Trials</b></p>
+<p><b>Practice Trials</b></p>
 
-    <p>
-      On each trial, you will see a <b>letter string</b> in the center of the screen.
-      Some strings form <b>real English words</b>, and others are <b>nonwords</b>
-      (letter strings that are not real words).
-    </p>
+<p>
+  On each trial, you will see a fixation cross followed by a
+  <b>letter string</b> in the center of the screen. Some strings are
+  <b>real English words</b>, and others are <b>nonwords</b>.
+</p>
 
-    <p>
-      Your task is to decide <b>as quickly and accurately as possible</b> whether
-      the letter string is a real word.
-    </p>
+<p>
+  The letter string will disappear, and after a brief delay a prompt
+  will appear asking you to respond.
+</p>
 
-    <p>
-      Press <b>M</b> if the string is a <b>real word</b><br>
-      Press <b>Z</b> if the string is a <b>nonword</b>
-    </p>
+<p>
+  Decide whether the letter string is a real English word.
+</p>
 
-    <p>
-      A fixation cross (<b>+</b>) will appear before each item.
-      During practice, you will receive feedback after each response.
-    </p>
+<p>
+  Press <b>M</b> if the string is a <b>real word</b><br>
+  Press <b>Z</b> if the string is a <b>nonword</b>
+</p>
 
-    <p><i>Press the space bar to begin the practice trials.</i></p>
-  `,
+<p>
+  During practice, you will receive feedback after each response.
+</p>
+
+<p><i>Press the space bar to begin the practice trials.</i></p>
+`,
   choices: [" "]
 };
 
@@ -360,6 +373,7 @@ const practice_trials = [
 
 const practice_block = {
   timeline: [
+    // Fixation
     {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: `<div class="word">+</div>`,
@@ -368,28 +382,58 @@ const practice_block = {
       data: { task: "practice_fix" }
     },
 
+    // Show letter string for 2s (no response)
     {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: () => `<div class="word">${jsPsych.timelineVariable("target")}</div>`,
-      choices: ["z", "m"],
-
-      // ✅ IMPORTANT: data as a function so timelineVariable resolves per-trial
+      choices: "NO_KEYS",
+      trial_duration: 2000,
       data: () => ({
-        task: "practice",
+        task: "practice_stimulus",
+        target: jsPsych.timelineVariable("target"),
+        correct_key: jsPsych.timelineVariable("correctAns")
+      })
+    },
+
+    // Blank for 3s (no response)
+    {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `<div style="height:80px;"></div>`,
+      choices: "NO_KEYS",
+      trial_duration: 3000,
+      data: { task: "practice_blank" }
+    },
+
+    // Decision screen (collect response)
+    {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <p style="
+          font-size: 28px;
+          text-align: center;
+          font-family: Courier New, Courier, monospace;
+          color: #000;
+          margin-top: 40px;
+        ">
+          Word (M) &nbsp;&nbsp; Nonword (Z)
+        </p>
+      `,
+      choices: ["z", "m"],
+      data: () => ({
+        task: "practice_decision",
         target: jsPsych.timelineVariable("target"),
         correct_key: jsPsych.timelineVariable("correctAns")
       }),
-
       on_finish: (d) => {
-        // ✅ safest key comparison (handles case, key aliases, etc.)
         d.correct = jsPsych.pluginAPI.compareKeys(d.response, d.correct_key);
       }
     },
 
+    // Feedback
     {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: () => {
-        const prev = jsPsych.data.get().filter({ task: "practice" }).last(1).values()[0];
+        const prev = jsPsych.data.get().filter({ task: "practice_decision" }).last(1).values()[0];
         const cls = prev.correct ? "correct" : "incorrect";
         const txt = prev.correct ? "Correct" : "Incorrect";
         return `<div class="feedback-box ${cls}"><b>${txt}</b></div>`;
@@ -402,15 +446,13 @@ const practice_block = {
   timeline_variables: practice_trials,
   randomize_order: true
 };
-
-
 /* =========================
    Main task instructions
 ========================= */
 const task_instructions = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `
-    <p>You will see words.</p>
+    <p>Just like the practice you will see a fixation cross and then a letter string. </p>
     <p>
       Press <b>Z</b> for a <b>nonword</b><br>
       Press <b>M</b> for a <b>real word</b>
@@ -514,7 +556,20 @@ const save_data = {
   action: "save",
   experiment_id: "AA0OXBjnorxa",
   filename: filename,
-  data_string: () => jsPsych.data.get().csv()
+  data_string: () => jsPsych.data.get().csv(),
+
+  on_finish: () => {
+    // Small delay to ensure save completes before navigation
+    setTimeout(() => {
+      if (sona_id) {
+        window.location.assign(SONA_COMPLETION_URL);
+      } else {
+        jsPsych.endExperiment(
+          "Thanks for participating! Please return to SONA to receive credit."
+        );
+      }
+    }, 300);
+  }
 };
 
 const end_screen = {
@@ -526,6 +581,11 @@ const end_screen = {
 
 /* =========================
    Build + run timeline AFTER loading trials.csv
+   Timing per item:
+     + 500 ms
+     word 2000 ms (no response)
+     blank 3000 ms (no response)
+     response screen (Word (M) / Nonword (Z))
 ========================= */
 (async () => {
   try {
@@ -533,6 +593,7 @@ const end_screen = {
     const trials = jsPsych.randomization.shuffle(rows);
 
     const word_trials = trials.flatMap((t, i) => ([
+      // Fixation
       {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: `<div class="word">+</div>`,
@@ -541,13 +602,53 @@ const end_screen = {
         extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
         data: { task: "fixation", trial_number: i + 1 }
       },
+
+      // Show letter string for 2s (no response)
       {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: `<div class="word">${t.target}</div>`,
+        choices: "NO_KEYS",
+        trial_duration: 2000,
+        extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+        data: {
+          task: "stimulus",
+          freq: t.frequency,
+          item_type: t.item_type,
+          target: t.target,
+          lex: t.lex,
+          correct_key: String(t.correctAns).toLowerCase(),
+          trial_number: i + 1
+        }
+      },
+
+      // Blank screen for 3s (no response)
+      {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `<div style="height:80px;"></div>`,
+        choices: "NO_KEYS",
+        trial_duration: 3000,
+        extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+        data: { task: "blank", trial_number: i + 1 }
+      },
+
+      // Response screen (collect decision)
+      {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `
+          <p style="
+            font-size: 28px;
+            text-align: center;
+            font-family: Courier New, Courier, monospace;
+            color: #000;
+            margin-top: 40px;
+          ">
+            Word (M) &nbsp;&nbsp; Nonword (Z)
+          </p>
+        `,
         choices: ["z", "m"],
         extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
         data: {
-          task: "zm",
+          task: "decision",
           freq: t.frequency,
           item_type: t.item_type,
           target: t.target,
@@ -556,13 +657,11 @@ const end_screen = {
           trial_number: i + 1
         },
         on_finish: d => {
-          d.correct = (
-            String(d.response).toLowerCase() ===
-            String(d.correct_key).toLowerCase()
-          );
+          d.correct = jsPsych.pluginAPI.compareKeys(d.response, d.correct_key);
         }
       }
     ]));
+
 
     const timeline = [];
 
