@@ -365,10 +365,10 @@ const practice_instructions = {
 };
 
 const practice_trials = [
-  { target: "APPLE", correctAns: "m" },
-  { target: "TABLE", correctAns: "m" },
-  { target: "PLONE", correctAns: "z" },
-  { target: "MEBER", correctAns: "z" }
+  { target: "APPLE", correctAns: "z" },
+  { target: "TABLE", correctAns: "z" },
+  { target: "PLONE", correctAns: "m" },
+  { target: "MEBER", correctAns: "m" }
 ];
 
 const practice_block = {
@@ -452,7 +452,7 @@ const practice_block = {
 const task_instructions = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `
-    <p>Just like the practice you will see a fixation cross and then a letter string. </p>
+    <p>Just like the practice you will see a fixation cross and then a letter string. After a brief delay you will be presented with a screen where you will make your choice. </p>
     <p>
       Press <b>Z</b> for a <b>nonword</b><br>
       Press <b>M</b> for a <b>real word</b>
@@ -542,7 +542,7 @@ const debrief = {
         using <b>webcam-based measurement online</b>.
       </p>
 
-      <p>Click <b>Continue</b> to finish and submit your data.</p>
+      <p>Click <b>Continue</b> to finish and submit your data. Please reach out to gellerja@bc.edu with questions. </p>
     </div>
   `,
   choices: ["Continue"]
@@ -603,23 +603,29 @@ const end_screen = {
         data: { task: "fixation", trial_number: i + 1 }
       },
 
-      // Show letter string for 2s (no response)
       {
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: `<div class="word">${t.target}</div>`,
-        choices: "NO_KEYS",
-        trial_duration: 2000,
-        extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
-        data: {
-          task: "stimulus",
-          freq: t.frequency,
-          item_type: t.item_type,
-          target: t.target,
-          lex: t.lex,
-          correct_key: String(t.correctAns).toLowerCase(),
-          trial_number: i + 1
-        }
-      },
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: () => `<div class="word">${t.target}</div>`,
+  choices: "NO_KEYS",
+  trial_duration: 4000, // 1000 word + 3000 blank
+  extensions: [{ type: jsPsychExtensionMeye, params: { detection_interval: 200 } }],
+  data: {
+    task: "stim_and_blank",
+    freq: t.frequency,
+    item_type: t.item_type,
+    target: t.target,
+    lex: t.lex,
+    correct_key: String(t.correctAns).toLowerCase(),
+    trial_number: i + 1
+  },
+  on_load: () => {
+    // after 1000 ms, blank it out
+    setTimeout(() => {
+      const el = document.querySelector(".word");
+      if (el) el.innerHTML = "";   // or replace with &nbsp;
+    }, 1000);
+  }
+},
 
       // Blank screen for 3s (no response)
       {
@@ -642,7 +648,7 @@ const end_screen = {
             color: #000;
             margin-top: 40px;
           ">
-            Word (M) &nbsp;&nbsp; Nonword (Z)
+            Word (z) &nbsp;&nbsp; Nonword (m)
           </p>
         `,
         choices: ["z", "m"],
