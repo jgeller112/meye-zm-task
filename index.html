@@ -13,6 +13,7 @@
   <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
   <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.2.0"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-instructions@1.1.4"></script>
 
   <!-- Virtual chinrest (NO RESCALING) -->
   <script src="https://unpkg.com/@jspsych/plugin-virtual-chinrest@2.0.3"></script>
@@ -72,6 +73,22 @@
 
   .feedback-box.correct { border-color: #1e8e3e; }   /* green */
   .feedback-box.incorrect { border-color: #d93025; } /* red */
+
+  .pupil-card {
+    background: #fff;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 20px 28px;
+    text-align: left;
+    border-radius: 8px;
+    line-height: 1.45;
+  }
+  .pupil-card h2 { margin-top: 0; text-align: center; }
+  .pupil-card li { margin-bottom: 6px; }
+  .eye-examples { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin: 12px 0; }
+  .eye-examples figure { margin: 0; text-align: center; font-size: 15px; }
+  .eye-examples .ok { color: #1e8e3e; font-weight: bold; }
+  .eye-examples .bad { color: #d93025; font-weight: bold; }
   </style>
 </head>
 
@@ -321,6 +338,79 @@ const virtual_chinrest = {
         (dist && isFinite(dist)) ? (dist < 300 || dist > 900) : null
     });
   }
+};
+
+/* ---- Plain-language walkthrough shown before the MEYE calibration ---- */
+function eyeSvg(box) {
+  return `
+    <svg width="170" height="150" viewBox="0 0 170 150" aria-hidden="true">
+      <rect width="170" height="150" fill="#e9d3c0"/>
+      <path d="M25 75 Q85 30 145 75 Q85 120 25 75 Z" fill="#fff" stroke="#6b4f3a" stroke-width="2"/>
+      <circle cx="85" cy="75" r="20" fill="#5b7fa3"/>
+      <circle cx="85" cy="75" r="9" fill="#111"/>
+      <rect x="${box[0]}" y="${box[1]}" width="${box[2]}" height="${box[2]}"
+            fill="none" stroke="#e00" stroke-width="3"/>
+    </svg>`;
+}
+
+const pupil_instructions = {
+  type: jsPsychInstructions,
+  show_clickable_nav: true,
+  button_label_previous: "Back",
+  button_label_next: "Next",
+  pages: [
+    `<div class="pupil-card">
+      <h2>Setting up pupil tracking</h2>
+      <p>Next, you will see a live video from your webcam. We will set up the tracker so it can find
+         your <b>pupil</b> (the black circle in the middle of your eye). This takes about 2 minutes.</p>
+      <p>Here is what will happen:</p>
+      <ol>
+        <li>You will read a short screen about lighting and click <b>Continue</b>.</li>
+        <li>You will move a <b>red square</b> over one of your eyes in the video.</li>
+        <li>You will tick the <b>Okay!</b> box, click <b>Calibrate</b>, and hold still, <b>without blinking</b>, for about 20 seconds.</li>
+        <li>You will check that a red dot is sitting on your pupil, then continue.</li>
+      </ol>
+    </div>`,
+
+    `<div class="pupil-card">
+      <h2>Before you start</h2>
+      <ul>
+        <li><b>Light your face from the front or side.</b> Do not sit with a window or bright lamp behind you.</li>
+        <li><b>Sit close to the screen</b>, so your eye is large and clear in the video, but you can still see the whole screen.</li>
+        <li><b>Avoid glare.</b> If you see a bright white reflection on your eye or glasses, tilt the screen or change the lighting.
+            If you need your glasses to read the screen, keep them on.</li>
+        <li><b>Get comfortable now.</b> Once calibration starts, keep your head and computer as still as possible until the study ends.</li>
+      </ul>
+    </div>`,
+
+    `<div class="pupil-card">
+      <h2>Placing the red square</h2>
+      <p>Drag the square over <b>one eye</b>. Use the handle in its corner to resize it so it covers the
+         <b>whole eye, from corner to corner</b>, with a little room around it. It does not need to be perfect.</p>
+      <div class="eye-examples">
+        <figure>${eyeSvg([17, 7, 136])}<figcaption class="ok">&#10003; Good: whole eye</figcaption></figure>
+        <figure>${eyeSvg([70, 60, 30])}<figcaption class="bad">&#10007; Too small</figcaption></figure>
+        <figure>${eyeSvg([95, 25, 70])}<figcaption class="bad">&#10007; Off to the side</figcaption></figure>
+      </div>
+      <p>Then tick the <b>Okay!</b> box below the instructions. This unlocks the <b>Calibrate</b> button.
+         Click <b>Calibrate</b>, look at the screen, <b>don't blink</b>, and keep still while the percentage rises.</p>
+    </div>`,
+
+    `<div class="pupil-card">
+      <h2>Checking the result</h2>
+      <p>When calibration finishes, look at the video. You should see a <b>red dot on your pupil</b> that:</p>
+      <ul>
+        <li>stays on the black center of your eye,</li>
+        <li>does not jump around, and</li>
+        <li>does not spread into the colored part of your eye.</li>
+      </ul>
+      <p>If the square's handles are in the way, click <b>Hide / show box dragger and resizer</b> to see the dot.</p>
+      <p>If it doesn't look right, click <b>Recalibrate</b>. Usually more light on your face, less glare,
+         or a better-placed square fixes it. If it looks good, click <b>Continue</b>.</p>
+      <p>Click <b>Next</b> below when you're ready to begin.</p>
+    </div>`
+  ],
+  data: { task: "pupil_instructions" }
 };
 
 const meye_calibration = {
@@ -695,6 +785,7 @@ const end_screen = {
         virtual_chinrest,
 
          // MEYE config after chinrest
+        pupil_instructions,
         meye_calibration,
 
         practice_instructions,
